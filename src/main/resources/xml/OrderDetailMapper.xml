@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.OrderDetailDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.OrderDetail">
+		<id column="id" property="id" />
+		<id column="order_id" property="orderId" />
+		<id column="sku_id" property="skuId" />
+		<id column="goods_count" property="goodsCount" />
+		<id column="actual_count" property="actualCount" />
+		<id column="goods_price" property="goodsPrice" />
+		<id column="goods_carriage" property="goodsCarriage" />
+		<id column="goods_amount" property="goodsAmount" />
+		<id column="practical_clearing" property="practicalClearing" />
+		<id column="clearing_info" property="clearingInfo" />
+		<id column="goods_name" property="goodsName" />
+		<id column="goods_img" property="goodsImg" />
+		<id column="goods_spec" property="goodsSpec" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, order_id, sku_id, goods_count, actual_count, goods_price, goods_carriage, goods_amount, practical_clearing, clearing_info, goods_name, goods_img, goods_spec
+	</sql>
+	
+</mapper>

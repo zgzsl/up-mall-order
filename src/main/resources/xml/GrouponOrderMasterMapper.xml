@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.GrouponOrderMasterDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.GrouponOrderMaster">
+		<id column="id" property="id" />
+		<id column="groupon_order_id" property="grouponOrderId" />
+		<id column="order_id" property="orderId" />
+		<id column="member_id" property="memberId" />
+		<id column="voucher" property="voucher" />
+		<id column="win_voucher" property="winVoucher" />
+		<id column="groupon_result" property="grouponResult" />
+		<id column="back_prize" property="backPrize" />
+		<id column="groupon_status" property="grouponStatus" />
+		<id column="create_time" property="createTime" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, groupon_order_id, order_id, member_id, voucher, win_voucher,groupon_result, back_prize, groupon_status ,create_time
+	</sql>
+
+
+	<resultMap id="GrouponListMap" type="com.zsl.upmall.vo.out.GrouponListVo">
+		<result column="groupNickName" property="groupNickName" jdbcType="VARCHAR" />
+		<result column="groupAvatar" property="groupAvatar" jdbcType="VARCHAR" />
+		<result column="grouponName" property="grouponName" jdbcType="VARCHAR" />
+		<result column="nickName" property="nickName" jdbcType="VARCHAR"/>
+		<result column="payTime" property="payTime"/>
+		<result column="goodsCount" property="goodsCount" jdbcType="INTEGER"/>
+	</resultMap>
+
+
+	<select id="getGrouponListByPage" resultMap="GrouponListMap">
+				SELECT
+					u1.nick_name groupNickName,
+					u1.avatar groupAvatar,
+					ga.activity_title grouponName,
+					u.nick_name nickName,
+					o.pay_time payTime,
+					d.goods_count goodsCount
+				FROM
+					`groupon_order_master` g
+				LEFT JOIN user_member u on u.id = g.member_id
+				LEFT JOIN order_master o on o.id = g.order_id
+				LEFT JOIN order_detail d on d.order_id = g.order_id
+				LEFT JOIN groupon_order go on go.id = g.groupon_order_id
+			    LEFT JOIN user_member u1 on u1.id = go.user_member_id
+				LEFT JOIN groupon_activities ga on ga.id = go.groupon_activities_id
+				WHERE
+					g.groupon_order_id =  #{grouponOrderId}
+				ORDER BY o.pay_time DESC
+	</select>
+
+
+	<resultMap id="GroupNoticeListResultMap" type="com.zsl.upmall.vo.MiniNoticeVo">
+		<result column="activityMode" property="activityMode" jdbcType="INTEGER" />
+		<result column="orderId" property="orderId" jdbcType="INTEGER" />
+		<result column="orderSn" property="orderSn" jdbcType="VARCHAR" />
+		<result column="totalFee" property="totalFee" jdbcType="DECIMAL"/>
+		<result column="goodsCount" property="goodsCount" jdbcType="INTEGER"/>
+		<result column="goodsName" property="goodsName" jdbcType="VARCHAR" />
+		<result column="goodsSpc" property="goodsSpc" jdbcType="VARCHAR"/>
+		<result column="openId" property="openId" jdbcType="VARCHAR"/>
+		<result column="goodsPrice" property="goodsPrice" jdbcType="DECIMAL"/>
+	</resultMap>
+
+
+	<select id="getGroupNoticeList" resultMap="GroupNoticeListResultMap">
+		SELECT
+			ga.`mode` activityMode,
+			om.id orderId,
+			om.system_order_no orderSn,
+			om.practical_pay totalFee,
+			od.goods_count goodsCount,
+			od.goods_name goodsName,
+			od.goods_spec goodsSpc,
+			od.goods_price goodsPrice,
+			um.weixin_openid openId
+		FROM
+			groupon_order_master gom
+		LEFT JOIN order_master om on om.id = gom.order_id
+		LEFT JOIN order_detail od on od.order_id = om.id
+		LEFT JOIN user_member um on um.id = gom.member_id
+		LEFT JOIN groupon_order go on go.id = gom.groupon_order_id
+		LEFT JOIN groupon_activities ga on ga.id = go.groupon_activities_id
+		WHERE
+			gom.groupon_order_id = #{grouponOrderId}
+		and gom.groupon_status = #{grouponStatus}
+	</select>
+
+	<resultMap id="SendMsgResultMap" type="com.zsl.upmall.vo.SendMsgVo">
+		<result column="avatar" property="avatar" jdbcType="VARCHAR" />
+		<result column="nickName" property="nickName" jdbcType="VARCHAR"/>
+		<result column="msgType" property="msgType" jdbcType="VARCHAR"/>
+	</resultMap>
+
+
+	<select id="sendMsg" resultMap="SendMsgResultMap">
+			SELECT
+				u.avatar avatar,
+				u.nick_name nickName,
+				CASE o.groupon_order_id
+			WHEN 0 THEN
+				'发起拼团'
+			WHEN null THEN
+				''
+			WHEN -1 THEN
+				''
+			ELSE
+				'参与拼团'
+			END msgType
+			FROM
+				order_master o
+			LEFT JOIN user_member u ON u.id = o.member_id
+			WHERE
+				o.id = #{orderId};
+	</select>
+
+</mapper>

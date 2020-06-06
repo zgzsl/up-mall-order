@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.GrouponActivitiesDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.GrouponActivities">
+		<id column="id" property="id" />
+		<id column="spu_id" property="spuId" />
+		<id column="activity_title" property="activityTitle" />
+		<id column="activity_cover" property="activityCover" />
+		<id column="activity_describe" property="activityDescribe" />
+		<id column="share_title" property="shareTitle" />
+		<id column="share_desc" property="shareDesc" />
+		<id column="share_cover" property="shareCover" />
+		<id column="start_time" property="startTime" />
+		<id column="end_time" property="endTime" />
+		<id column="expire_hour" property="expireHour" />
+		<id column="create_time" property="createTime" />
+		<id column="weight" property="weight" />
+		<id column="mode" property="mode" />
+		<id column="group_count" property="groupCount" />
+		<id column="prize_count" property="prizeCount" />
+		<id column="bounty" property="bounty" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, spu_id, activity_title, activity_cover, activity_describe, share_title, share_desc, share_cover, start_time, end_time, expire_hour, create_time, weight, mode, group_count, prize_count, bounty
+	</sql>
+	
+</mapper>

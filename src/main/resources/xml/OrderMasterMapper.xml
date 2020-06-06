@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.OrderMasterDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.OrderMaster">
+		<id column="id" property="id" />
+		<id column="system_order_no" property="systemOrderNo" />
+		<id column="transaction_order_no" property="transactionOrderNo" />
+		<id column="pay_way" property="payWay" />
+		<id column="member_id" property="memberId" />
+		<id column="address_id" property="addressId" />
+		<id column="combo_level" property="comboLevel" />
+		<id column="shop_id" property="shopId" />
+		<id column="total_goods_amout" property="totalGoodsAmout" />
+		<id column="total_carriage" property="totalCarriage" />
+		<id column="practical_pay" property="practicalPay" />
+		<id column="hidden" property="hidden" />
+		<id column="remark" property="remark" />
+		<id column="tracking_company_id" property="trackingCompanyId" />
+		<id column="tracking_number" property="trackingNumber" />
+		<id column="groupon_activity_id" property="grouponActivityId" />
+		<id column="groupon_order_id" property="grouponOrderId" />
+		<id column="order_status" property="orderStatus" />
+		<id column="create_time" property="createTime" />
+		<id column="pay_time" property="payTime" />
+		<id column="finished_time" property="finishedTime" />
+		<id column="cancel_time" property="cancelTime" />
+		<id column="deliver_time" property="deliverTime" />
+		<id column="refund_time" property="refundTime" />
+		<id column="refund_finish_time" property="refundFinishTime" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, system_order_no, transaction_order_no, pay_way, member_id, address_id,combo_level, shop_id, total_goods_amout, total_carriage, practical_pay, hidden, remark, tracking_company_id, tracking_number,groupon_activity_id, groupon_order_id, order_status, create_time, pay_time, finished_time, cancel_time, deliver_time, refund_time, refund_finish_time
+	</sql>
+
+	<resultMap id="OrderListResultMap" type="com.zsl.upmall.vo.out.OrderListVo">
+		<id column="orderId" property="orderId" />
+		<id column="orderSn" property="orderSn" />
+		<id column="orderStatus" property="orderStatus" />
+		<id column="totalAmount" property="totalAmount" />
+		<id column="comboLevel" property="comboLevel" />
+		<id column="isGroup" property="isGroup" />
+		<id column="grouponActivityId" property="grouponActivityId" />
+		<collection column="orderId" property="orderListProductList" select="getOrderListProductList"></collection>
+		<collection property="totalProductCounts" column="orderId" select="getTotalProductCount"></collection>
+	</resultMap>
+
+
+	<select id="getOrderListByStatus" resultMap="OrderListResultMap">
+		SELECT
+			orderM.id orderId,
+			orderM.member_id userId,
+			orderM.system_order_no orderSn,
+			orderM.practical_pay totalAmount,
+		    orderM.order_status orderStatus,
+		    orderM.combo_level comboLevel,
+		    if(gom.id,gom.groupon_status,-1) isGroup,
+		    orderM.groupon_activity_id grouponActivityId
+		FROM
+			order_master orderM
+		LEFT JOIN groupon_order_master gom on gom.order_id = orderM.id
+		WHERE
+			orderM.member_id = #{userId}
+		and orderM.hidden = 0
+		<if test="orderStatus != -1 ">
+			and orderM.order_status = #{orderStatus}
+		</if>
+		ORDER BY
+		    orderM.create_time DESC
+	</select>
+
+
+	<resultMap id="OrderListProductListMap" type="com.zsl.upmall.vo.out.OrderListProductVo">
+		<id column="productCount" property="productCount" />
+		<id column="productName" property="productName" />
+		<id column="productImg" property="productImg" />
+		<id column="productPrice" property="productPrice" />
+		<id column="productSpec" property="productSpec" />
+		<id column="clearInfo" property="clearInfo" />
+	</resultMap>
+
+	<select id="getOrderListProductList" resultMap="OrderListProductListMap">
+		SELECT
+			detailO.goods_count productCount,
+		    detailO.goods_name productName,
+			detailO.goods_img productImg,
+			detailO.goods_price productPrice,
+			detailO.goods_spec productSpec,
+			detailO.clearing_info clearInfo
+		FROM
+			order_detail detailO
+		where detailO.order_id = #{orderId}
+	</select>
+
+	<select id="getTotalProductCount" resultType="java.lang.Integer">
+		SELECT
+			count(detailO.goods_count) totalProductCount
+		FROM
+			order_detail detailO
+		WHERE
+			detailO.order_id = #{orderId}
+	</select>
+
+
+
+	<resultMap id="skuResultMap" type="com.zsl.upmall.vo.in.SkuDetailVo">
+		<id column="skuId" property="skuId" />
+		<id column="spuId" property="spuId" />
+		<id column="skuName" property="skuName" />
+		<id column="spuName" property="spuName" />
+		<id column="salesVolume" property="salesVolume" />
+		<id column="stock" property="stock" />
+		<id column="status" property="status" />
+		<id column="skuImage" property="skuImage" />
+		<id column="spec" property="spec" />
+	</resultMap>
+
+	<!--sku详情-->
+	<select id="getSkuDetail" resultMap="skuResultMap">
+		SELECT
+		   sku.id skuId,
+		   sku.spu_id spuId,
+		   sku.sku_name skuName,
+		   sku.cost_price costPrice,
+		   sku.retail_price retailPrice,
+		   sku.sales_volume salesVolume,
+		   sku.stock,
+		   sku.`status`,
+		   sku.sku_picture skuImage,
+		   GROUP_CONCAT(sv.spec_value) spec
+		  FROM
+		   sku
+		  LEFT JOIN sku_spec_value ssv ON ssv.sku_id = sku.id
+		  LEFT JOIN spec_value sv ON ssv.spec_value_id = sv.id
+		  WHERE
+		   sku.id = #{skuId}
+		  GROUP BY
+		   sku.id
+	</select>
+
+	<!--扣减库存-->
+	<update id="addAndSubSkuStock" parameterType="java.util.List">
+		UPDATE sku
+		SET
+		<if test="isSaleVolume">
+			sales_volume =
+			<foreach collection="list" item="item" open=" CASE id " close=" ELSE sales_volume END">
+				WHEN #{item.skuId} THEN (sales_volume
+				<if test="!action">+</if>
+				<if test="action">-</if>
+				#{item.count})
+			</foreach>
+		</if>
+		<if test="isStock">
+		   <if test="isSaleVolume">,</if>
+			 stock =
+				<foreach collection="list" item="item" open=" CASE id " close=" ELSE stock END">
+					WHEN #{item.skuId} THEN (stock
+					<if test="!action">-</if>
+					<if test="action">+</if>
+					#{item.count})
+				</foreach>
+		</if>
+		WHERE id IN
+		<foreach collection="list" item="item" separator="," open="(" close=")">
+			#{item.skuId}
+		</foreach>
+	</update>
+
+	<select id="getSkuPriceByUserLevel" resultType="java.math.BigDecimal">
+		SELECT
+		   CASE (select u.user_level userLevel from user_member u where u.id = #{userId})
+		   WHEN 0 THEN news_price
+		   WHEN 1 THEN bronze_price
+		   WHEN 2 THEN silver_price
+		   WHEN 3 THEN gold_price
+		   WHEN 4 THEN partner_price
+		   WHEN 5 THEN dealer_price
+		   WHEN 6 THEN agent_price
+		   ELSE sku.retail_price END skuPrice
+		   FROM
+		   sku,
+		   sku_special_price ssp
+		   WHERE sku.id = #{skuId}
+		   AND sku.id = ssp.sku_id
+	</select>
+
+</mapper>

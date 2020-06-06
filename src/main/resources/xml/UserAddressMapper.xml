@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.UserAddressDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.UserAddress">
+		<id column="id" property="id" />
+		<id column="name" property="name" />
+		<id column="user_id" property="userId" />
+		<id column="administrative_region_id" property="administrativeRegionId" />
+		<id column="address_detail" property="addressDetail" />
+		<id column="tel" property="tel" />
+		<id column="is_default" property="isDefault" />
+		<id column="add_time" property="addTime" />
+		<id column="update_time" property="updateTime" />
+		<id column="is_delete" property="isDelete" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, name, user_id, administrative_region_id, address_detail, tel, is_default, add_time, update_time, is_delete
+	</sql>
+
+
+	<resultMap id="CustomResultMap" type="com.zsl.upmall.vo.in.AddressInfo">
+		<id column="id" property="id" />
+		<id column="name" property="name" />
+		<id column="address_detail" property="addressDetail" />
+		<id column="tel" property="tel" />
+		<id column="is_default" property="isDefault" />
+		<id column="country_code" property="countryCode" />
+		<id column="province_code" property="provinceCode" />
+		<id column="city_code" property="cityCode" />
+		<id column="area_code" property="areaCode" />
+		<id column="site_full_name" property="fullSite" />
+	</resultMap>
+
+	<select id="addressInfo" resultMap="CustomResultMap">
+   SELECT
+      addr.*,
+     region.country_code,
+     region.province_code,
+     region.city_code,
+     region.area_code,
+     region.site_full_name
+   FROM
+      user_address addr
+   LEFT JOIN administrative_region region on addr.administrative_region_id = region.id
+   WHERE
+      addr.id = #{id}
+</select>
+
+
+</mapper>

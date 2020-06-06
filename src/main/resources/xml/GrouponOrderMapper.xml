@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.GrouponOrderDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.GrouponOrder">
+		<id column="id" property="id" />
+		<id column="groupon_order_no" property="grouponOrderNo" />
+		<id column="groupon_activities_id" property="grouponActivitiesId" />
+		<id column="user_member_id" property="userMemberId" />
+		<id column="groupon_order_status" property="grouponOrderStatus" />
+		<id column="groupon_code" property="grouponCode" />
+		<id column="create_time" property="createTime" />
+		<id column="end_time" property="endTime" />
+		<id column="settlement_time" property="settlementTime" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, groupon_order_no, groupon_activities_id, user_member_id, groupon_order_status, groupon_code, create_time, end_time, settlement_time
+	</sql>
+	
+</mapper>

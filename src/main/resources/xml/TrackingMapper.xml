@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.TrackingDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.Tracking">
+		<id column="tracking_id" property="trackingId" />
+		<id column="tracking_company_name" property="trackingCompanyName" />
+		<id column="tracking_code" property="trackingCode" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		tracking_id, tracking_company_name, tracking_code
+	</sql>
+	
+</mapper>
