@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.TrackingSubpackageDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.TrackingSubpackage">
+		<id column="id" property="id" />
+		<id column="order_no" property="orderNo" />
+		<id column="tracking_company_id" property="trackingCompanyId" />
+		<id column="tracking_number" property="trackingNumber" />
+		<id column="subpackage" property="subpackage" />
+		<id column="deliver_time" property="deliverTime" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, order_no, tracking_company_id,tracking_number,subpackage,deliver_time
+	</sql>
+	<select id="subpackageTracking" resultType="com.zsl.upmall.entity.Tracking">
+		SELECT
+          tk.tracking_id as trackingId,
+	      tk.tracking_code as trackingCode,
+          tk.tracking_company_name AS trackingCompanyName
+        FROM
+	       tracking_subpackage ts
+        LEFT JOIN tracking tk ON tk.tracking_id = ts.tracking_company_id
+        WHERE
+	    ts.tracking_number =#{trackingSn} LIMIT 1
+	</select>
+</mapper>

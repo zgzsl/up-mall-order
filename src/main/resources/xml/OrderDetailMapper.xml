@@ -20,5 +20,13 @@
 	<sql id="Base_Column_List">
 		id, order_id, sku_id, goods_count, actual_count, goods_price, goods_carriage, goods_amount, practical_clearing, clearing_info, goods_name, goods_img, goods_spec
 	</sql>
-	
+
+	<select id="orderGoodsList" resultType="com.zsl.upmall.vo.out.GoodsVo">
+		SELECT
+	       goods_name AS goodsName
+        FROM `order_detail` WHERE id IN
+		<foreach collection="detailList" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</select>
 </mapper>

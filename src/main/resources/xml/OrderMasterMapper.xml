@@ -186,4 +186,47 @@
 		   AND sku.id = ssp.sku_id
 	</select>
 
+
+	<select id="getOrderTracking" resultMap="TrackingResultMap">
+		SELECT
+	     t.tracking_company_name AS trackingCompanyName,
+	     om.tracking_number AS trackingNumber,
+	     od.goods_name AS goodsName
+         FROM
+	    order_master om
+        INNER JOIN order_detail od ON om.id = od.order_id
+        INNER JOIN tracking t ON om.tracking_company_id = t.tracking_id
+        WHERE om.system_order_no =#{orderNo}
+	</select>
+
+	<resultMap id="TrackingResultMap" type="com.zsl.upmall.vo.out.TrackingVo">
+		<id column="trackingCompanyName" property="trackingCompanyName" />
+		<id column="trackingNumber" property="trackingNumber" />
+		<collection property="goodsList" ofType="com.zsl.upmall.vo.out.GoodsVo">
+			<result column="goodsName" property="goodsName"/>
+		</collection>
+	</resultMap>
+
+	<select id="getOrderSubpackageTracking" resultType="com.zsl.upmall.vo.out.SubpackageVo">
+		SELECT
+		t.tracking_company_name AS trackingCompanyName,
+		ts.tracking_number AS trackingNumber,
+		ts.subpackage
+	    FROM
+		order_master om
+	    INNER JOIN tracking_subpackage ts ON ts.order_no = om.system_order_no
+	    INNER JOIN tracking t ON ts.tracking_company_id = t.tracking_id
+	    WHERE om.system_order_no =#{orderNo}
+	</select>
+	<select id="orderTracking" resultType="com.zsl.upmall.entity.Tracking">
+		SELECT
+          tk.tracking_id as trackingId,
+	      tk.tracking_code as trackingCode,
+          tk.tracking_company_name AS trackingCompanyName
+       FROM
+	      order_master om
+       LEFT JOIN tracking tk ON tk.tracking_id = om.tracking_company_id
+        WHERE
+	     om.tracking_number =#{trackingSn} LIMIT 1
+	</select>
 </mapper>

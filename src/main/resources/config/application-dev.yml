@@ -18,7 +18,7 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
      # 使用druid连接池
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://cdb-puhlb3l3.gz.tencentcdb.com:10076/up_mall?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://gz-cdb-9ejqau7b.sql.tencentcdb.com:61279/up_mall?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: adminfeng5148@
     druid:
