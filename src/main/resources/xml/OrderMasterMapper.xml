@@ -120,7 +120,7 @@
 		SELECT
 		   sku.id skuId,
 		   sku.spu_id spuId,
-		   sku.sku_name skuName,
+		   spu.spu_name skuName,
 		   sku.cost_price costPrice,
 		   sku.retail_price retailPrice,
 		   sku.sales_volume salesVolume,
@@ -131,6 +131,7 @@
 		  FROM
 		   sku
 		  LEFT JOIN sku_spec_value ssv ON ssv.sku_id = sku.id
+		  LEFT JOIN spu spu on spu.id = sku.spu_id
 		  LEFT JOIN spec_value sv ON ssv.spec_value_id = sv.id
 		  WHERE
 		   sku.id = #{skuId}

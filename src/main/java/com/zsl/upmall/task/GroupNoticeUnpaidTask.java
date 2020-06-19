@@ -1,6 +1,10 @@
 package com.zsl.upmall.task;
 
+import com.zsl.upmall.entity.GrouponActivities;
+import com.zsl.upmall.entity.GrouponOrder;
+import com.zsl.upmall.service.GrouponActivitiesService;
 import com.zsl.upmall.service.GrouponOrderMasterService;
+import com.zsl.upmall.service.GrouponOrderService;
 import com.zsl.upmall.util.BeanUtil;
 import com.zsl.upmall.util.CharUtil;
 import com.zsl.upmall.vo.GroupOrderStatusEnum;
@@ -51,17 +55,26 @@ public class GroupNoticeUnpaidTask extends Task {
             }
         }else if(this.type - 2 == 0){
             //场景说明拼团成功通知
-            List<MiniNoticeVo> miniNoticeVos = grouponOrderMasterService.getGroupNoticeList(this.joinGroupId,GroupOrderStatusEnum.SUCCESS.getCode());
-            List<MiniNoticeVo> miniNoticeVosFail = grouponOrderMasterService.getGroupNoticeList(this.joinGroupId,GroupOrderStatusEnum.FAILED.getCode());
-            miniNoticeVos.addAll(miniNoticeVosFail);
-            for(MiniNoticeVo miniNoticeVo : miniNoticeVos){
-                String notice = "";
-                if(miniNoticeVo.getActivityMode() - 0 == 0){
-                    notice = "拼团成功";
-                }else if(miniNoticeVo.getActivityMode() - 1 == 0){
-                    notice = "成团但没拼中，退款并获得随机奖励金";
+            GrouponOrderService grouponOrderService = BeanUtil.getBean(GrouponOrderService.class);
+            GrouponOrder grouponOrder = grouponOrderService.getById(this.joinGroupId);
+            if(grouponOrder != null){
+                GrouponActivitiesService grouponActivitiesService = BeanUtil.getBean(GrouponActivitiesService.class);
+                GrouponActivities grouponActivities = grouponActivitiesService.getById(grouponOrder.getGrouponActivitiesId());
+                if(grouponActivities != null){
+                    if(grouponActivities.getMode() - 0 == 0){
+                        List<MiniNoticeVo> miniNoticeVos = grouponOrderMasterService.getGroupNoticeList(this.joinGroupId,GroupOrderStatusEnum.SUCCESS.getCode());
+                        miniNoticeVos.stream()
+                                .forEach(success -> {
+                                    grouponOrderMasterService.push2(success.getOpenId(),"pages/collageOrderList/collageOrderList",CharUtil.getString15Length(success.getGoodsName()+success.getGoodsSpc()),success.getGoodsPrice()+"","拼团成功");
+                                });
+                    }else if(grouponActivities.getMode() - 1 == 0) {
+                        List<MiniNoticeVo> miniNoticeVosFail = grouponOrderMasterService.getGroupNoticeList(this.joinGroupId,GroupOrderStatusEnum.FAILED.getCode());
+                        miniNoticeVosFail.stream()
+                                .forEach(fail -> {
+                                    grouponOrderMasterService.push2(fail.getOpenId(),"pages/collageOrderList/collageOrderList",CharUtil.getString15Length(fail.getGoodsName()+fail.getGoodsSpc()),fail.getGoodsPrice()+"","成团但没拼中，退款并获得随机奖励金");
+                                });
+                    }
                 }
-                grouponOrderMasterService.push2(miniNoticeVo.getOpenId(),"pages/collageOrderList/collageOrderList",CharUtil.getString15Length(miniNoticeVo.getGoodsName()+miniNoticeVo.getGoodsSpc()),miniNoticeVo.getGoodsPrice()+"",notice);
             }
         }
         logger.info("拼团结果通知开始---【【【" + this.joinGroupId+"】】】");

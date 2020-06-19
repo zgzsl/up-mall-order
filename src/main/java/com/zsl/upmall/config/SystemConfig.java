@@ -5,11 +5,11 @@ package com.zsl.upmall.config;
  */
 public class SystemConfig {
     // 域名 (测试)
-    //public static String TEST_HOST = "http://upmall-beta.cntracechain.com";
-    public static String TEST_HOST = "http://upmall.cntracechain.com";
+    public static String TEST_HOST = "http://upmall-beta.cntracechain.com";
+    //public static String TEST_HOST = "http://upmall.cntracechain.com";
     // 支付域名 (测试)
-    //public static String TEST_PAY_HOST = "http://zs-beta.cntracechain.com";
-    public static String TEST_PAY_HOST = "https://mall.cntracechain.com";
+    public static String TEST_PAY_HOST = "http://zs-beta.cntracechain.com";
+    //public static String TEST_PAY_HOST = "https://mall.cntracechain.com";
     // 活动信息ZSET 前缀
     public final static String ACTIVE_INFO_PREFIX = "ACTIVE_";
     // 团队信息HASH 前缀

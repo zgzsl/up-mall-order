@@ -670,17 +670,25 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 redisService.hset(SystemConfig.GROUP_INFO_PREFIX + joinGroupId, userId+"", orderDetail.getGoodsCount()+"");
             }
         }else{
+            int currentSize = 0;
             if(mode - 0 == 0){
                 redisService.hset(SystemConfig.GROUP_INFO_PREFIX + joinGroupId, userId+"", 1+"");
-            }else if(mode - 1 == 0){
+                Map<Object, Object> hall = redisService.hgetall(SystemConfig.GROUP_INFO_PREFIX + joinGroupId);
+                currentSize = hall.size();
+             }else if(mode - 1 == 0){
                 String old = redisService.hget(SystemConfig.GROUP_INFO_PREFIX + joinGroupId,userId+"");
                 if("null".equals(old) || StringUtils.isBlank(old)){
                        old = "0";
                 }
                 redisService.hset(SystemConfig.GROUP_INFO_PREFIX + joinGroupId, userId+"",  orderDetail.getGoodsCount() + Integer.valueOf(old)+"");
+                Map<Object, Object> hall = redisService.hgetall(SystemConfig.GROUP_INFO_PREFIX + joinGroupId);
+                for(Map.Entry<Object, Object> o : hall.entrySet()){
+                    currentSize += Integer.valueOf(o.getValue().toString());
+                    System.out.println("djdj:"+o.getValue());
+                }
             }
-            Map<Object, Object> hall = redisService.hgetall(SystemConfig.GROUP_INFO_PREFIX + joinGroupId);
-            BigDecimal score = new BigDecimal( hall.size()).divide(new BigDecimal(grouponCount)).multiply(new BigDecimal(100));
+
+            BigDecimal score = new BigDecimal( currentSize).divide(new BigDecimal(grouponCount)).multiply(new BigDecimal(100));
             redisService.zUpdateScore(SystemConfig.ACTIVE_INFO_PREFIX + grouponActivityId, joinGroupId+"", score.doubleValue());
         }
     }

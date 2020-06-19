@@ -167,6 +167,7 @@ public class OrderMasterController {
      */
     @PostMapping("/createOrder")
     public JsonResult createOrder(@RequestBody CreateOrderVo orderInfo, HttpServletRequest request) {
+        logger.info("下单参数:【【【"+ JSONObject.toJSONString(orderInfo));
         long startTime = System.currentTimeMillis();
         //获取用户 userId
         RequestContext requestContext = RequestContextMgr.getLocalContext();
@@ -234,8 +235,8 @@ public class OrderMasterController {
                 return result.error("参数错误");
             }
             // 收货地址
-            // AddressInfo addressInfo = HttpClientUtil.getAddressInfoById(orderInfo.getAddressId(),requestContext.getToken());
-            if (orderInfo.getAddressId() == null) {
+             AddressInfo addressInfo = addressService.addressInfo(new Long(orderInfo.getAddressId()));
+            if (addressInfo == null) {
                 return result.error("地址不存在");
             }
 
@@ -369,8 +370,8 @@ public class OrderMasterController {
                 orderDetail.setGoodsCarriage(orderInfo.getFreight());
                 orderDetail.setOrderId(orderId);
                 orderDetail.setSkuId(orderProductVo.getSkuId());
-                orderDetail.setGoodsAmount(orderInfo.getTotalAmount().subtract(orderInfo.getFreight()));
-                orderDetail.setPracticalClearing(orderInfo.getTotalAmount());
+                orderDetail.setGoodsAmount(orderProductVo.getProductPrice().multiply(new BigDecimal(orderProductVo.getProductCount())).subtract(orderInfo.getFreight()));
+                orderDetail.setPracticalClearing(orderProductVo.getProductPrice().multiply(new BigDecimal(orderProductVo.getProductCount())));
                 orderDetailService.save(orderDetail);
             }
 
@@ -385,6 +386,11 @@ public class OrderMasterController {
             // 订单地址处理
             JsonResult updateAddreResult = setDeleteAndAdd(orderInfo.getAddressId());
             logger.info("订单模块：{{" + order.getSystemOrderNo() + "}}的地址处理结果=====》》》" + updateAddreResult);
+        }
+
+        // 订单支付超期任务
+        if (StringUtils.isBlank(orderInfo.getOrderSn())) {
+            taskService.addTask(new OrderUnpaidTask(orderId));
         }
 
         Map<String, Object> map = new HashMap<>();
@@ -424,11 +430,6 @@ public class OrderMasterController {
 
         }else {
             return result.error("暂不支持该支付方式");
-        }
-
-        // 订单支付超期任务
-        if (StringUtils.isBlank(orderInfo.getOrderSn())) {
-            taskService.addTask(new OrderUnpaidTask(orderId));
         }
 
         logger.info("总下单模块执行时间=========【【【 " + (System.currentTimeMillis() - startTime) / 1000 + " 】】】秒");
@@ -775,10 +776,10 @@ public class OrderMasterController {
         // 根据 是否拼团，处理拼团业务
         if(order.getGrouponActivityId() != null && order.getGrouponActivityId() - 0 != 0){
             grouponOrderMasterService.doGrouponService(order.getId(),order.getMemberId());
+        }else{
+            //返利 (非拼团才返利)
+            memberRebate(token,order);
         }
-
-        //返利
-        memberRebate(token,order);
 
         // 取消订单超时未支付任务
         taskService.removeTask(new OrderUnpaidTask(order.getId()));

@@ -11,6 +11,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonObject;
+import com.zsl.upmall.util.HttpClientUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -20,6 +26,28 @@ public class SynQueryDemo {
 	private String key = "klQKEpZj7273";
 	private String customer = "0230E4F8F6A00AB57F4A90862D5B9EEF";
 	private Integer resultv = 2;
+	private String autoUrl = "http://www.kuaidi100.com/autonumber/auto";
+
+
+	public String getAutoCompany(String trackingNum){
+		String result = HttpClientUtil.doGet(autoUrl+"?num="+trackingNum+"&key="+key);
+		String companyCode = "";
+		try {
+			if(StringUtils.isNotBlank(result)){
+				JSONArray json = JSON.parseArray(result);
+				JSONObject jsonObject = json.getJSONObject(0);
+				companyCode = jsonObject.getString("comCode");
+			}
+		}catch (Exception e){
+			e.printStackTrace();
+		}
+		return companyCode;
+	}
+
+	public static void main(String[] args) {
+		new SynQueryDemo().getAutoCompany("773040907408631");
+	}
+
 
 	public String synQueryData(String com, String num, String phone, String from, String to) {
 

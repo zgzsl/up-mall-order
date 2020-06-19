@@ -1,15 +1,16 @@
 package com.zsl.upmall.web;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.stream.JsonReader;
 import com.zsl.upmall.aid.JsonResult;
 import com.zsl.upmall.aid.PageParam;
-import com.zsl.upmall.entity.OrderMaster;
-import com.zsl.upmall.entity.OrderRefund;
-import com.zsl.upmall.service.GrouponOrderMasterService;
-import com.zsl.upmall.service.OrderMasterService;
-import com.zsl.upmall.service.OrderRefundService;
+import com.zsl.upmall.config.SynQueryDemo;
+import com.zsl.upmall.config.SystemConfig;
+import com.zsl.upmall.entity.*;
+import com.zsl.upmall.service.*;
 import com.zsl.upmall.task.GroupNoticeUnpaidTask;
 import com.zsl.upmall.task.TaskService;
 import com.zsl.upmall.util.CharUtil;
@@ -17,6 +18,7 @@ import com.zsl.upmall.util.HttpClientUtil;
 import com.zsl.upmall.util.MoneyUtil;
 import com.zsl.upmall.vo.GroupOrderStatusEnum;
 import com.zsl.upmall.vo.out.GrouponListVo;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +46,12 @@ public class GrouponOrderMasterController {
     private GrouponOrderMasterService grouponOrderMasterService;
 
     @Autowired
+    private GrouponOrderService grouponOrderService;
+
+    @Autowired
+    private GrouponActivitiesService activitiesService;
+
+    @Autowired
     private TaskService taskService;
 
     @Autowired
@@ -51,6 +59,9 @@ public class GrouponOrderMasterController {
 
     @Autowired
     private OrderMasterService orderMasterService;
+
+    @Autowired
+    private TrackingService trackingService;
 
     @GetMapping("list")
     public JsonResult list(PageParam param, Integer grouponOrderId){
@@ -60,9 +71,17 @@ public class GrouponOrderMasterController {
     }
 
     @GetMapping("test")
-    public JsonResult test(Long orderId,Integer userId){
+    public JsonResult test(Integer joinGroupId){
         JsonResult result = new JsonResult();
-        grouponOrderMasterService.doGrouponService(orderId,userId);
+        GrouponOrder grouponOrder = grouponOrderService.getById(joinGroupId);
+        if(grouponOrder == null){
+            return result.error("拼团不存在");
+        }
+        GrouponActivities activities = activitiesService.getById(grouponOrder.getGrouponActivitiesId());
+        if(activities == null){
+            return result.error("拼团活动不存在");
+        }
+        grouponOrderMasterService.settlementGroup(joinGroupId,activities);
         return result.success(null);
     }
 
@@ -78,6 +97,43 @@ public class GrouponOrderMasterController {
         JsonResult result = new JsonResult();
         taskEndFissionWanted();
         return result.success(null);
+    }
+
+
+    @GetMapping("autoCom")
+    public  JsonResult autoCompany(String trackingSn){
+        JsonResult result = new JsonResult();
+        String companyCode = new SynQueryDemo().getAutoCompany(trackingSn);
+        Tracking tracking = trackingService.getOne(Wrappers.<Tracking>query()
+            .lambda().eq(Tracking::getTrackingCode,companyCode)
+        );
+        return result.success(tracking);
+    }
+
+
+    @GetMapping("deliver")
+    public JsonResult deliver(String orderSn,String trackingSn,Integer trackingCompanyId){
+        logger.info("订单号:【"+orderSn+"】,物流号+【"+trackingSn+"】,物流公司【"+trackingCompanyId+"】");
+        JsonResult result = new JsonResult();
+        OrderMaster orderMaster = orderMasterService.getOne(Wrappers.<OrderMaster>query()
+            .lambda().eq(OrderMaster::getSystemOrderNo,orderSn)
+        );
+        if(orderMaster == null ){
+            return result.error("订单【"+orderSn+"】不存在");
+        }
+        if(orderMaster.getOrderStatus() - SystemConfig.ORDER_STATUS_DELIVER != 0){
+            return result.error("订单【"+orderSn+"】状态不对");
+        }
+        OrderMaster update = new OrderMaster();
+        update.setId(orderMaster.getId());
+        update.setTrackingNumber(trackingSn);
+        update.setTrackingCompanyId(trackingCompanyId);
+        update.setDeliverTime(new Date());
+        update.setOrderStatus(SystemConfig.ORDER_STATUS_RECIEVE);
+        if(!orderMasterService.updateById(update)){
+            return result.error("发货失败");
+        }
+        return result.success("发货成功");
     }
 
     public void taskEndFissionWanted(){

@@ -52,18 +52,10 @@ public class UpMallApplicationTests {
 
    @Test
     public void contextLoads() {
-       LambdaQueryWrapper<OrderRefund> orderRefundQuery = new LambdaQueryWrapper<>();
-       orderRefundQuery.isNull(OrderRefund::getRefundTime);
-       List<OrderRefund> refundList = orderRefundService.list(orderRefundQuery);
-       List<OrderRefund> updateBatch = new ArrayList<>();
-       for(OrderRefund item : refundList) {
-           //判断时间 (测试先放开)
-            LocalDateTime add = item.getCreateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            LocalDateTime now = DateUtil.getCurrent14().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-            LocalDateTime expire =  now.plusDays(1);
-            if(add.isAfter(now) && add.isBefore(expire)){
-                continue;
-            }
+       Map<Object, Object> hall = redisService.hgetall(SystemConfig.GROUP_INFO_PREFIX + 1);
+       for(Map.Entry<Object, Object> o : hall.entrySet()){
+           //currentSize += o
+           System.out.println("djdj:"+o.getValue());
        }
     }
 }

@@ -37,8 +37,8 @@ public class FissionWantedTask {
     @Autowired
     private OrderMasterService orderMasterService;
 
-    @Scheduled(cron="0 0 14 * * ?")  //每天下午两点
-    //@Scheduled(cron="0 0/5 * * * ?")  //五分钟一次
+    //@Scheduled(cron="0 0 14 * * ?")  //每天下午两点
+    @Scheduled(cron="0 0/5 * * * ?")  //五分钟一次
     public void taskEndFissionWanted(){
         logger.info("微信退款定时任务=======》开始");
         //每天凌晨00:15触发
