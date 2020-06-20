@@ -274,7 +274,7 @@ public class OrderMasterController {
                 if (needTotalPrice.compareTo(orderInfo.getTotalAmount()) != 0) {
                     return result.error("订单价格不一致");
                 }
-                orderProductVoList.add(new OrderProductVo(sku.getSkuId(), orderInfo.getProductCount(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSkuName()));
+                orderProductVoList.add(new OrderProductVo(sku.getSkuId(), orderInfo.getProductCount(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(),sku.getSkuName()));
 
             } else {
                 // 购物车 (又加上了)
@@ -303,7 +303,7 @@ public class OrderMasterController {
                     sku.setSkuPrice(skuPrice);
                     BigDecimal itemPrice = sku.getSkuPrice().multiply(new BigDecimal(cart.getGoodsNum()));
                     needTotalCartPrice = needTotalCartPrice.add(itemPrice);
-                    orderProductVoList.add(new OrderProductVo(sku.getSkuId(), cart.getGoodsNum(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSkuName()));
+                    orderProductVoList.add(new OrderProductVo(sku.getSkuId(), cart.getGoodsNum(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(),sku.getSkuName()));
                 }
                 needTotalCartPrice = needTotalCartPrice.add(orderInfo.getFreight());
                 if(needTotalCartPrice.compareTo(orderInfo.getTotalAmount()) != 0){
@@ -365,7 +365,12 @@ public class OrderMasterController {
                 orderDetail.setGoodsCount(orderProductVo.getProductCount());
                 orderDetail.setGoodsPrice(orderProductVo.getProductPrice());
                 orderDetail.setGoodsImg(orderProductVo.getProductImg());
-                orderDetail.setGoodsName(orderProductVo.getProductName());
+                if(StringUtils.isNotBlank(orderProductVo.getProductName())){
+                    orderDetail.setGoodsName(orderProductVo.getProductName());
+                }else{
+                    orderDetail.setGoodsName(orderProductVo.getSkuName());
+                }
+
                 orderDetail.setGoodsSpec(orderProductVo.getSpec());
                 orderDetail.setGoodsCarriage(orderInfo.getFreight());
                 orderDetail.setOrderId(orderId);

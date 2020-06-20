@@ -120,7 +120,8 @@
 		SELECT
 		   sku.id skuId,
 		   sku.spu_id spuId,
-		   spu.spu_name skuName,
+		   sku.sku_name skuName,
+		   spu.spu_name spuName,
 		   sku.cost_price costPrice,
 		   sku.retail_price retailPrice,
 		   sku.sales_volume salesVolume,

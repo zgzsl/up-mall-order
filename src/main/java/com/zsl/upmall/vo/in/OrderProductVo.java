@@ -14,4 +14,5 @@ public class OrderProductVo {
     private String productImg;
     private String spec;
     private String productName;
+    private String skuName;
 }
