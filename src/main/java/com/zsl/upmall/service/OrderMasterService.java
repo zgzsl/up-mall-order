@@ -12,6 +12,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.zsl.upmall.entity.Tracking;
 import com.zsl.upmall.vo.in.SkuAddStockVo;
 import com.zsl.upmall.vo.in.SkuDetailVo;
+import com.zsl.upmall.vo.out.BuyLimitVo;
 import com.zsl.upmall.vo.out.OrderListVo;
 import com.zsl.upmall.vo.out.SubpackageVo;
 import com.zsl.upmall.vo.out.TrackingVo;
@@ -83,4 +84,12 @@ public interface OrderMasterService extends IService<OrderMaster> {
      * @return
      */
     Tracking orderTracking(String trackingSn);
+
+    /**
+     * 获取会员spu限购数量
+     * @param memberId
+     * @param spuList
+     * @return
+     */
+    List<BuyLimitVo> isBuyLimit(Integer memberId,List<Integer> spuList);
 }

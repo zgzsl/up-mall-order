@@ -1,5 +1,6 @@
 package com.zsl.upmall.web;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -19,6 +20,7 @@ import com.zsl.upmall.util.HttpClientUtil;
 import com.zsl.upmall.util.MoneyUtil;
 import com.zsl.upmall.validator.RequestLimit;
 import com.zsl.upmall.vo.GroupOrderStatusEnum;
+import com.zsl.upmall.vo.out.BuyLimitVo;
 import com.zsl.upmall.vo.out.GrouponListVo;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -129,6 +131,20 @@ public class GrouponOrderMasterController {
         return resetResult.success("设置成功");
     }
 
+
+    //根据用户id和supid获取限购数量
+    @GetMapping("isBuyLimit")
+    public JsonResult isBuyLimit(Integer joinGroupId,Integer spuId){
+        JsonResult result = new JsonResult();
+        List<Integer> spuList = new ArrayList<>();
+        spuList.add(spuId);
+        List<BuyLimitVo>  buyLimitVos = orderMasterService.isBuyLimit(joinGroupId,spuList);
+        if(CollectionUtil.isNotEmpty(buyLimitVos)){
+            return result.success(buyLimitVos.get(0).getLimits());
+        }else{
+            return result.error("获取限购数量错误");
+        }
+    }
 
     @GetMapping("test")
     public JsonResult test(Integer joinGroupId){

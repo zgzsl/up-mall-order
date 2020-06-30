@@ -13,6 +13,7 @@ import com.zsl.upmall.mapper.OrderMasterDao;
 import com.zsl.upmall.service.OrderMasterService;
 import com.zsl.upmall.vo.in.SkuAddStockVo;
 import com.zsl.upmall.vo.in.SkuDetailVo;
+import com.zsl.upmall.vo.out.BuyLimitVo;
 import com.zsl.upmall.vo.out.OrderListVo;
 import com.zsl.upmall.vo.out.SubpackageVo;
 import com.zsl.upmall.vo.out.TrackingVo;
@@ -111,5 +112,10 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
     @Override
     public Tracking orderTracking(String trackingSn) {
         return baseMapper.orderTracking(trackingSn);
+    }
+
+    @Override
+    public List<BuyLimitVo> isBuyLimit(Integer memberId, List<Integer> spuList) {
+        return baseMapper.isBuyLimit(memberId,spuList);
     }
 }

@@ -6,6 +6,7 @@
  */
 package com.zsl.upmall.web;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -30,6 +31,7 @@ import com.zsl.upmall.vo.BalanceRefundListVo;
 import com.zsl.upmall.vo.BalanceRefundVo;
 import com.zsl.upmall.vo.RefundNotifyVo;
 import com.zsl.upmall.vo.in.*;
+import com.zsl.upmall.vo.out.BuyLimitVo;
 import com.zsl.upmall.vo.out.Logistics;
 import com.zsl.upmall.vo.out.OrderListVo;
 import com.zsl.upmall.vo.out.UnifiedOrderVo;
@@ -274,6 +276,22 @@ public class OrderMasterController {
                 if (needTotalPrice.compareTo(orderInfo.getTotalAmount()) != 0) {
                     return result.error("订单价格不一致");
                 }
+
+                //用户商品限购判断
+                List<Integer> spuList = new ArrayList<>();
+                spuList.add(sku.getSpuId());
+                List<BuyLimitVo> buyLimitVos = baseService.isBuyLimit(userId,spuList);
+                if(CollectionUtil.isNotEmpty(buyLimitVos)){
+                   Integer limit =  buyLimitVos.get(0).getLimits();
+                   if(limit == -1){
+                       return result.error("【"+sku.getSpuName()+"】限制购买数量");
+                   }else if(limit > 0){
+                       if(orderInfo.getProductCount() - limit > 0){
+                           return result.error("【"+sku.getSpuName()+"】超过限制购买数量");
+                       }
+                   }
+                }
+
                 orderProductVoList.add(new OrderProductVo(sku.getSkuId(), orderInfo.getProductCount(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(),sku.getSkuName()));
 
             } else {
@@ -288,7 +306,9 @@ public class OrderMasterController {
                     return  result.error("购物车已经清空");
                 }
                 BigDecimal needTotalCartPrice = new BigDecimal(0);
+
                 for(ShoppingCart cart : shoppingCarts){
+
                     sku = baseService.getSkuDetail(cart.getSkuId());
                     if (sku == null) {
                         return result.error("不存在或已下架");
@@ -304,6 +324,22 @@ public class OrderMasterController {
                     BigDecimal itemPrice = sku.getSkuPrice().multiply(new BigDecimal(cart.getGoodsNum()));
                     needTotalCartPrice = needTotalCartPrice.add(itemPrice);
                     orderProductVoList.add(new OrderProductVo(sku.getSkuId(), cart.getGoodsNum(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(),sku.getSkuName()));
+
+                    //用户商品限购判断
+                    List<Integer> spuList = new ArrayList<>();
+                    spuList.add(sku.getSpuId());
+                    List<BuyLimitVo> buyLimitVos = baseService.isBuyLimit(userId,spuList);
+                    if(CollectionUtil.isNotEmpty(buyLimitVos)){
+                        Integer limit =  buyLimitVos.get(0).getLimits();
+                        if(limit == -1){
+                            return result.error("【"+sku.getSpuName()+"】限制购买数量");
+                        }else if(limit > 0){
+                            if(orderInfo.getProductCount() - limit > 0){
+                                return result.error("【"+sku.getSpuName()+"】超过限制购买数量");
+                            }
+                        }
+                    }
+
                 }
                 needTotalCartPrice = needTotalCartPrice.add(orderInfo.getFreight());
                 if(needTotalCartPrice.compareTo(orderInfo.getTotalAmount()) != 0){
