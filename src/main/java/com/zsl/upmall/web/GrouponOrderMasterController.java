@@ -134,11 +134,11 @@ public class GrouponOrderMasterController {
 
     //根据用户id和supid获取限购数量
     @GetMapping("isBuyLimit")
-    public JsonResult isBuyLimit(Integer joinGroupId,Integer spuId){
+    public JsonResult isBuyLimit(Integer memberId,Integer spuId){
         JsonResult result = new JsonResult();
         List<Integer> spuList = new ArrayList<>();
         spuList.add(spuId);
-        List<BuyLimitVo>  buyLimitVos = orderMasterService.isBuyLimit(joinGroupId,spuList);
+        List<BuyLimitVo>  buyLimitVos = orderMasterService.isBuyLimit(memberId,spuList);
         if(CollectionUtil.isNotEmpty(buyLimitVos)){
             return result.success(buyLimitVos.get(0).getLimits());
         }else{
