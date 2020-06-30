@@ -24,7 +24,7 @@ public class CommonExceptionHandler {
 
    private JsonResult result = new JsonResult();
 
-   // @ExceptionHandler(value = Exception.class)
+    @ExceptionHandler(value = Exception.class)
     public JsonResult exceptionHandler(Exception e){
         if (e instanceof BusinessException) {
             return result.error(((BusinessException) e).getStatusCode()+"",e.getMessage());

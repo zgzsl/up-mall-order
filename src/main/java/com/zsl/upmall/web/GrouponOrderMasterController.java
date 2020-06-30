@@ -12,10 +12,12 @@ import com.zsl.upmall.config.SystemConfig;
 import com.zsl.upmall.entity.*;
 import com.zsl.upmall.service.*;
 import com.zsl.upmall.task.GroupNoticeUnpaidTask;
+import com.zsl.upmall.task.GrouponOrderUnpaidTask;
 import com.zsl.upmall.task.TaskService;
 import com.zsl.upmall.util.CharUtil;
 import com.zsl.upmall.util.HttpClientUtil;
 import com.zsl.upmall.util.MoneyUtil;
+import com.zsl.upmall.validator.RequestLimit;
 import com.zsl.upmall.vo.GroupOrderStatusEnum;
 import com.zsl.upmall.vo.out.GrouponListVo;
 import org.apache.commons.lang3.StringUtils;
@@ -26,9 +28,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @ClassName GrouponOrderMasterController
@@ -69,6 +75,60 @@ public class GrouponOrderMasterController {
         Page<GrouponListVo> page = new Page(param.getPageNum(), param.getPageSize());
         return result.success(grouponOrderMasterService.getGrouponListByPage(page,grouponOrderId));
     }
+
+    @RequestLimit(count = 2, time = 180)
+    @GetMapping("resetGrouponTime")
+    public JsonResult resetGrouponTime(Integer groupActivityId){
+        JsonResult resetResult = new JsonResult();
+        //获取拼团活动信息
+        GrouponActivities activityDetail = activitiesService.getById(groupActivityId);
+        if (activityDetail == null) {
+            logger.info("【设置活动】 拼团活动【【【" + groupActivityId + "】】】不存在");
+            return resetResult.error("【设置活动】 拼团活动【【【" + groupActivityId + "】】】不存在");
+        }
+
+        //判断活动是否过期
+        LocalDateTime end = activityDetail.getEndTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+        LocalDateTime nowDate = LocalDateTime.now();
+        if (end.isBefore(nowDate)) {
+            logger.info("【设置活动】活动过期：【【【" + groupActivityId + "】】】");
+            return resetResult.error("【设置活动】活动过期：【【【" + groupActivityId + "】】】");
+        }
+
+        //根据活动id获取所有拼团  并且修改结束时间 ,重新加入队列
+        List<GrouponOrder> grouponOrderList = grouponOrderService.list(
+                Wrappers.<GrouponOrder>lambdaQuery().
+                        eq(GrouponOrder::getGrouponActivitiesId,groupActivityId)
+        );
+        grouponOrderList.stream()
+                .forEach(item -> {
+                    GrouponOrder grouponOrder = new GrouponOrder();
+                    LocalDateTime groupStartTime = item.getCreateTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                    LocalDateTime endDate = groupStartTime.plusMinutes(activityDetail.getExpireHour());
+                    //结束时间
+                    Date endTime = null;
+                    if (endDate.isBefore(end)) {
+                        endTime = Date.from(endDate.atZone(ZoneId.systemDefault()).toInstant());
+                    } else {
+                        endTime = Date.from(end.atZone(ZoneId.systemDefault()).toInstant());
+                    }
+                    grouponOrder.setId(item.getId());
+                    grouponOrder.setEndTime(endTime);
+                    grouponOrderService.updateById(grouponOrder);
+
+                    //去掉 延时队列
+                    taskService.removeTask(new GrouponOrderUnpaidTask(item.getId(),activityDetail));
+
+
+                    //开启延时队列 定时
+                    LocalDateTime endTimeLocal = endTime.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+                    LocalDateTime createTimeLocal = LocalDateTime.now();
+                    long delay = ChronoUnit.MILLIS.between(createTimeLocal, endTimeLocal);
+                    taskService.addTask(new GrouponOrderUnpaidTask(item.getId(),activityDetail,delay));
+                });
+        return resetResult.success("设置成功");
+    }
+
 
     @GetMapping("test")
     public JsonResult test(Integer joinGroupId){

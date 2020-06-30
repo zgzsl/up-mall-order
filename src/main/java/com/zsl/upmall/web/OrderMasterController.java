@@ -772,7 +772,7 @@ public class OrderMasterController {
             throw new RuntimeException("【【【【" + order.getSystemOrderNo() + "】】】】销量增加失败");
         }
 
-        if (StringUtils.isNotBlank(order.getRemark())) {
+        if (StringUtils.isNotBlank(order.getComboLevel())  &&  StringUtils.isNotBlank(order.getRemark())) {
             //调用绑定接口
             int i = HttpClientUtil.agentShareBind(order.getMemberId(), order.getRemark());
             logger.info("代理商绑定结果: [[[["+ i +"]]]]----【【【【" + order.getSystemOrderNo() + "】】】】,用户ID:" + "【【【【" + order.getMemberId() + "】】】,分享人分享码:【【【" + order.getRemark() + "】】】");
