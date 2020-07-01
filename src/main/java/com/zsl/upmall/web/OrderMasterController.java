@@ -265,6 +265,21 @@ public class OrderMasterController {
                     }
                 }else{
                     skuPrice = baseService.getSkuPriceByUserLevel(userId, sku.getSkuId());
+
+                    //用户商品限购判断
+                    List<Integer> spuList = new ArrayList<>();
+                    spuList.add(sku.getSpuId());
+                    List<BuyLimitVo> buyLimitVos = baseService.isBuyLimit(userId,spuList);
+                    if(CollectionUtil.isNotEmpty(buyLimitVos)){
+                        Integer limit =  buyLimitVos.get(0).getLimits();
+                        if(limit == -1){
+                            return result.error("【"+sku.getSpuName()+"】限制购买数量");
+                        }else if(limit > 0){
+                            if(orderInfo.getProductCount() - limit > 0){
+                                return result.error("【"+sku.getSpuName()+"】超过限制购买数量");
+                            }
+                        }
+                    }
                 }
 
                 if (skuPrice == null) {
@@ -275,21 +290,6 @@ public class OrderMasterController {
                 BigDecimal needTotalPrice = sku.getSkuPrice().multiply(new BigDecimal(orderInfo.getProductCount())).add(orderInfo.getFreight());
                 if (needTotalPrice.compareTo(orderInfo.getTotalAmount()) != 0) {
                     return result.error("订单价格不一致");
-                }
-
-                //用户商品限购判断
-                List<Integer> spuList = new ArrayList<>();
-                spuList.add(sku.getSpuId());
-                List<BuyLimitVo> buyLimitVos = baseService.isBuyLimit(userId,spuList);
-                if(CollectionUtil.isNotEmpty(buyLimitVos)){
-                   Integer limit =  buyLimitVos.get(0).getLimits();
-                   if(limit == -1){
-                       return result.error("【"+sku.getSpuName()+"】限制购买数量");
-                   }else if(limit > 0){
-                       if(orderInfo.getProductCount() - limit > 0){
-                           return result.error("【"+sku.getSpuName()+"】超过限制购买数量");
-                       }
-                   }
                 }
 
                 orderProductVoList.add(new OrderProductVo(sku.getSkuId(), orderInfo.getProductCount(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(),sku.getSkuName()));
