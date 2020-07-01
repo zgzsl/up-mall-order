@@ -264,6 +264,7 @@ public class HttpClientUtil {
         params.put("total_fee",totalFeel);
         params.put("spbill_create_ip",ip);
         params.put("business_notify_url",SystemConfig.BUSINESS_NOTIFY_URL + "?token=" + token);
+        logger.info("微信统一下参数："+"=====》》{{{"+params.toJSONString()+"}}}");
         String result = doPostJson(SystemConfig.WEIXIN_UNION_RUL,params.toJSONString(),"");
         logger.info("微信统一下单结果：orderSn【【【"+orderSn+"】】】"+"=====》》{{{"+result+"}}}");
         UnifiedOrderVo unifiedResult = null;
