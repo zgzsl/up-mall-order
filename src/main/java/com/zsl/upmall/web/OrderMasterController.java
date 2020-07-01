@@ -258,7 +258,7 @@ public class OrderMasterController {
                 BigDecimal skuPrice = null;
                 if(orderInfo.getGrouponActivityId() - 0 != 0){
                     LambdaQueryWrapper<SkuGrouponPrice> queryWrapper = new LambdaQueryWrapper<>();
-                    queryWrapper.eq(SkuGrouponPrice::getSkuId,sku.getSkuId()).last("limit 1");
+                    queryWrapper.eq(SkuGrouponPrice::getSkuId,sku.getSkuId()).eq(SkuGrouponPrice::getActivitiesId,orderInfo.getGrouponActivityId()).last("limit 1");
                     SkuGrouponPrice skuGrouponPrice = skuGrouponPriceService.getOne(queryWrapper);
                     if(skuGrouponPrice != null){
                         skuPrice = skuGrouponPrice.getGrouponPrice();

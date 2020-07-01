@@ -37,6 +37,8 @@ public class SkuGrouponPrice extends Model<SkuGrouponPrice> {
     
 	 /**  */
 	private Integer skuId;
+
+	private Integer activitiesId;
     
 	 /** 团购价 */
 	private BigDecimal grouponPrice;

@@ -5,10 +5,11 @@
 	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.SkuGrouponPrice">
 		<id column="id" property="id" />
 		<id column="sku_id" property="skuId" />
+		<id column="activities_id" property="activitiesId" />
 		<id column="groupon_price" property="grouponPrice" />
 	</resultMap>
 	<sql id="Base_Column_List">
-		id, sku_id, groupon_price
+		id, sku_id, activities_id,groupon_price
 	</sql>
 	
 </mapper>
