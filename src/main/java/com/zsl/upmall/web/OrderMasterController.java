@@ -699,6 +699,16 @@ public class OrderMasterController {
             return result.success("订单已经处理成功!");
         }
 
+        //判断是否拆单
+        LambdaQueryWrapper<OrderDetail> orderDetailLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        orderDetailLambdaQueryWrapper.eq(OrderDetail::getOrderId,order.getId());
+        List<OrderDetail> orderDetails = orderDetailService.list(orderDetailLambdaQueryWrapper);
+        if(orderDetails.size() - 1 > 0 && StringUtils.isNotBlank(orderDetails.get(0).getClearingInfo())){
+            logger.info("订单号：【【【"+order.getSystemOrderNo()+"】】】订单拆单多份不修改状态");
+            return result.success("订单号：【【【"+order.getSystemOrderNo()+"】】】订单拆单多份:,待发货");
+        }
+
+
         // 设置订单 设置退还完成 ------>  支付成功，设置成 待发货
         OrderMaster upOrderReceived = new OrderMaster();
         upOrderReceived.setId(order.getId());

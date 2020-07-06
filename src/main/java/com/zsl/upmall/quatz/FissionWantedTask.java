@@ -70,7 +70,7 @@ public class FissionWantedTask {
                     updateRefund.setRefundFee(Integer.valueOf(MoneyUtil.moneyYuan2FenStr(orderMaster.getPracticalPay())));
                 }else{
                     updateRefund.setTotalFee(item.getTotalFee());
-                    updateRefund.setRefundFee(item.getTotalFee());
+                    updateRefund.setRefundFee(item.getRefundFee());
                 }
                 // 调用 微信退款
                 boolean result =  HttpClientUtil.doRefund(updateRefund);
