@@ -2,7 +2,7 @@
 #  port: 8088
 spring:
   redis:
-        host: localhost # Redis服务器地址
+        host: 222.186.56.173 # Redis服务器地址
         database: 0 # Redis数据库索引（默认为0）
         port: 6379 # Redis服务器连接端口
         password: adminfeng5148@ # Redis服务器连接密码（默认为空）
@@ -18,9 +18,9 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
      # 使用druid连接池
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://localhost:3306/up_mall?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://gz-cdb-9ejqau7b.sql.tencentcdb.com:61279/up_mall?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
-    password: My!0202@zsDB
+    password: adminfeng5148@
     druid:
       initial-size: 5 #连接池初始化大小
       min-idle: 10 #最小空闲连接数
@@ -41,8 +41,8 @@ mybatis-plus:
 #微信配置
 upmall:
   wx:
-    app-id: wx5d6523bd9937a38c
-    app-secret: 901d47303092a302b395ae38b19b44e3
+    app-id: wx8820721597cb9b10
+    app-secret: 32f9e34328ef46d86b3f2aa9e30b4772
     template:
      # 拼团成功通知
      - name: success
