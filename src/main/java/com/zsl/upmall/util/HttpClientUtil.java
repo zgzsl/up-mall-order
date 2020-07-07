@@ -381,6 +381,7 @@ public class HttpClientUtil {
         refundParam.put("refund_fee",orderRefund.getRefundFee());
         refundParam.put("refund_desc",orderRefund.getRefundDesc());
         refundParam.put("business_notify_url",SystemConfig.REFUND_NOTIFY_URL);
+        logger.info("微信退款orderRefund【【【"+orderRefund+"】】】请求参数："+refundParam.toJSONString());
         String result = doPostJson(SystemConfig.WEIXIN_REFUND_URL,refundParam.toJSONString(),null);
         logger.info("订单号：【【【"+ orderRefund.getOutTradeNo() + "】】】退款结果："+result);
         boolean isSuccess = false;
