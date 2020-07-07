@@ -382,7 +382,7 @@ public class HttpClientUtil {
         refundParam.put("refund_desc",orderRefund.getRefundDesc());
         refundParam.put("business_notify_url",SystemConfig.REFUND_NOTIFY_URL);
         String result = doPostJson(SystemConfig.WEIXIN_REFUND_URL,refundParam.toJSONString(),null);
-        logger.info("订单号：【【【"+ orderRefund.getOutTradeNo() + "】】】退款结果");
+        logger.info("订单号：【【【"+ orderRefund.getOutTradeNo() + "】】】退款结果："+result);
         boolean isSuccess = false;
         try {
             if(StringUtils.isNotBlank(result)){

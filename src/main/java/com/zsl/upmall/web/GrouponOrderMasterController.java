@@ -10,6 +10,8 @@ import com.zsl.upmall.aid.JsonResult;
 import com.zsl.upmall.aid.PageParam;
 import com.zsl.upmall.config.SynQueryDemo;
 import com.zsl.upmall.config.SystemConfig;
+import com.zsl.upmall.context.RequestContext;
+import com.zsl.upmall.context.RequestContextMgr;
 import com.zsl.upmall.entity.*;
 import com.zsl.upmall.service.*;
 import com.zsl.upmall.task.GroupNoticeUnpaidTask;
@@ -134,7 +136,9 @@ public class GrouponOrderMasterController {
 
     //根据用户id和supid获取限购数量
     @GetMapping("isBuyLimit")
-    public JsonResult isBuyLimit(Integer memberId,Integer spuId){
+    public JsonResult isBuyLimit(Integer spuId){
+        RequestContext requestContext = RequestContextMgr.getLocalContext();
+        Integer memberId = requestContext.getUserId();
         JsonResult result = new JsonResult();
         List<Integer> spuList = new ArrayList<>();
         spuList.add(spuId);

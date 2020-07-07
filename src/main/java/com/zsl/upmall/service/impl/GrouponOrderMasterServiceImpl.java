@@ -764,7 +764,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                     updateRefund.setRefundFee(Integer.valueOf(MoneyUtil.moneyYuan2FenStr(orderMaster.getPracticalPay())));
                     grouponOrderMaster.setBackPrize(MoneyUtil.moneyFen2Yuan(updateRefund.getTotalFee().toString()));
                 }else{
-                    grouponOrderMaster.setBackPrize(MoneyUtil.moneyFen2Yuan(item.getTotalFee().toString()));
+                    grouponOrderMaster.setBackPrize(MoneyUtil.moneyFen2Yuan(item.getRefundFee().toString()));
                 }
                 updateRefund.setRefundTime(new Date());
 
