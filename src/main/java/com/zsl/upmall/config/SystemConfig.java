@@ -63,13 +63,13 @@ public class SystemConfig {
     //套餐判断
     public static String IS_ORDER_PACKAGE = TEST_HOST + "/common-goods/upMall/uncalibrated/customizedCheck";
     //微信退款地址
-    public static String WEIXIN_REFUND_URL = TEST_PAY_HOST + "/baseService/wxpay/refund";
+    public static String WEIXIN_REFUND_URL = TEST_PAY_HOST + "/baseServiceUp/wxpay/refund";
     //微信退款回调地址
     public static String REFUND_NOTIFY_URL = TEST_HOST + "/order/order/refund-notify";
     // 余额退款回调地址
     public static String BALANCE_NOTIFY_URL = TEST_HOST + "/order/order/balance-notify";
     //微信统一下单接口
-    public static String WEIXIN_UNION_RUL = TEST_PAY_HOST + "/baseService/wxpay/unifiedOrder";
+    public static String WEIXIN_UNION_RUL = TEST_PAY_HOST + "/baseServiceUp/wxpay/unifiedOrder";
     //微信支付回调地址
     public static String BUSINESS_NOTIFY_URL = TEST_HOST + "/order/order/pay-notify";
     //系统标识
