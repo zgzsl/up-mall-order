@@ -636,7 +636,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
         orderRefund.setCreateTime(new Date());
         orderRefund.setOrderId(orderId);
         orderRefund.setRefundDesc("订单部分凭证未中奖的退款");
-        orderRefund.setTotalFee(Integer.parseInt(MoneyUtil.moneyYuan2FenStr(not_win_price)));
+        orderRefund.setTotalFee(Integer.parseInt(MoneyUtil.moneyYuan2FenStr(orderDetail.getGoodsAmount())));
         orderRefund.setRefundFee(Integer.parseInt(MoneyUtil.moneyYuan2FenStr(not_win_price)));
         logger.info("没中奖数量腿狂："+orderRefund.getTotalFee());
         orderRefundService.save(orderRefund);
@@ -764,7 +764,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                     updateRefund.setRefundFee(Integer.valueOf(MoneyUtil.moneyYuan2FenStr(orderMaster.getPracticalPay())));
                     grouponOrderMaster.setBackPrize(MoneyUtil.moneyFen2Yuan(updateRefund.getTotalFee().toString()));
                 }else{
-                    grouponOrderMaster.setBackPrize(MoneyUtil.moneyFen2Yuan(item.getTotalFee().toString()));
+                    grouponOrderMaster.setBackPrize(MoneyUtil.moneyFen2Yuan(item.getRefundFee().toString()));
                 }
                 updateRefund.setRefundTime(new Date());
 

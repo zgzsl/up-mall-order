@@ -13,6 +13,7 @@ import com.zsl.upmall.mapper.OrderMasterDao;
 import com.zsl.upmall.service.OrderMasterService;
 import com.zsl.upmall.vo.in.SkuAddStockVo;
 import com.zsl.upmall.vo.in.SkuDetailVo;
+import com.zsl.upmall.vo.out.BuyLimitVo;
 import com.zsl.upmall.vo.out.OrderListVo;
 import com.zsl.upmall.vo.out.SubpackageVo;
 import com.zsl.upmall.vo.out.TrackingVo;
@@ -24,8 +25,10 @@ import java.util.List;
 
 /**
  * @Description:订单(服务实现)
+ *
  * @version: V1.0
  * @author: binggleWang
+ *
  */
 @Service
 public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMaster> implements OrderMasterService {
@@ -83,7 +86,6 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
 
     /**
      * 获取订单 物流信息
-     *
      * @param orderNo
      * @return
      */
@@ -94,7 +96,6 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
 
     /**
      * 分包裹物流信息
-     *
      * @param orderNo
      * @return
      */
@@ -105,13 +106,17 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
 
     /**
      * 订单物流公司信息
-     *
      * @param trackingSn
      * @return
      */
     @Override
     public Tracking orderTracking(String trackingSn) {
         return baseMapper.orderTracking(trackingSn);
+    }
+
+    @Override
+    public List<BuyLimitVo> isBuyLimit(Integer memberId, List<Integer> spuList) {
+        return baseMapper.isBuyLimit(memberId,spuList);
     }
 
     /**

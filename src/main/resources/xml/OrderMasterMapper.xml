@@ -188,6 +188,49 @@
 	</select>
 
 
+
+	<resultMap id="buyLimitResultMap" type="com.zsl.upmall.vo.out.BuyLimitVo">
+		<id column="spu_id" property="spuId"></id>
+		<id column="buy_count" property="buyCount"></id>
+		<id column="buy_limit_count" property="buyLimitCount"></id>
+		<id column="limits" property="limits"></id>
+	</resultMap>
+	<!--判断是否超过购买限定-->
+	<select id="isBuyLimit"  resultMap="buyLimitResultMap">
+		SELECT spu.id spu_id,
+		spu.buy_limit_count,
+		IFNULL(result.buy_count,0) buy_count,
+		IF(result.buy_count IS NULL, spu.buy_limit_count , IF(result.limits = 0 , -1 ,result.limits)) limits
+		FROM spu
+		LEFT JOIN (
+		SELECT
+		om.member_id,
+		spu.id spu_id,
+		SUM(od.goods_count) buy_count,
+		spu.buy_limit_count,
+		IF(SUM(od.goods_count) &lt; buy_limit_count, buy_limit_count - SUM(od.goods_count), 0 ) limits
+		FROM
+		order_master om
+		JOIN order_detail od ON om.id = od.order_id
+		JOIN sku ON sku.id = od.sku_id
+		JOIN spu ON spu.id = sku.spu_id
+		WHERE
+		om.order_status IN (1, 2, 4)
+		AND spu.buy_limit_count != 0
+		AND om.member_id = #{memberId}
+		GROUP BY
+		om.member_id,
+		spu.id
+		) result ON spu.id = result.spu_id
+		where spu.id in
+			<foreach collection="spuList" separator="," open="(" close=")" item="item" index="">
+				#{item}
+			</foreach>
+	</select>
+
+
+
+	<!--物流====================================-->
 	<select id="getOrderTracking" resultMap="TrackingResultMap">
 		SELECT
 	     t.tracking_company_name AS trackingCompanyName,

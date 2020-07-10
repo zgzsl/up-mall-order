@@ -264,6 +264,7 @@ public class HttpClientUtil {
         params.put("total_fee",totalFeel);
         params.put("spbill_create_ip",ip);
         params.put("business_notify_url",SystemConfig.BUSINESS_NOTIFY_URL + "?token=" + token);
+        logger.info("微信统一下参数："+"=====》》{{{"+params.toJSONString()+"}}}");
         String result = doPostJson(SystemConfig.WEIXIN_UNION_RUL,params.toJSONString(),"");
         logger.info("微信统一下单结果：orderSn【【【"+orderSn+"】】】"+"=====》》{{{"+result+"}}}");
         UnifiedOrderVo unifiedResult = null;
@@ -380,8 +381,9 @@ public class HttpClientUtil {
         refundParam.put("refund_fee",orderRefund.getRefundFee());
         refundParam.put("refund_desc",orderRefund.getRefundDesc());
         refundParam.put("business_notify_url",SystemConfig.REFUND_NOTIFY_URL);
+        logger.info("微信退款orderRefund【【【"+orderRefund+"】】】请求参数："+refundParam.toJSONString());
         String result = doPostJson(SystemConfig.WEIXIN_REFUND_URL,refundParam.toJSONString(),null);
-        logger.info("订单号：【【【"+ orderRefund.getOutTradeNo() + "】】】退款结果");
+        logger.info("订单号：【【【"+ orderRefund.getOutTradeNo() + "】】】退款结果："+result);
         boolean isSuccess = false;
         try {
             if(StringUtils.isNotBlank(result)){

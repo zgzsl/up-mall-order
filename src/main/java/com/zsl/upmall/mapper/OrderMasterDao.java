@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.zsl.upmall.entity.Tracking;
 import com.zsl.upmall.vo.in.SkuAddStockVo;
 import com.zsl.upmall.vo.in.SkuDetailVo;
+import com.zsl.upmall.vo.out.BuyLimitVo;
 import com.zsl.upmall.vo.out.OrderListVo;
 import com.zsl.upmall.vo.out.SubpackageVo;
 import com.zsl.upmall.vo.out.TrackingVo;
@@ -56,6 +57,8 @@ public interface OrderMasterDao extends BaseMapper<OrderMaster> {
      * @return
      */
     BigDecimal getSkuPriceByUserLevel(@Param("userId") Integer userId, @Param("skuId") Integer skuId);
+
+    List<BuyLimitVo> isBuyLimit(@Param("memberId") Integer memberId,@Param("spuList") List<Integer> spuList);
 
     /**
      * 获取订单商品总数量
