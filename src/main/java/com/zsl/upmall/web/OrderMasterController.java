@@ -111,7 +111,7 @@ public class OrderMasterController {
     private String HTTP_ORDER_AGENT;
 
 
-    private static final Integer ORDER_SUCCESS_CODE = 300200;
+    private static final String ORDER_SUCCESS_CODE = "300200";
 
     /**
      * @explain 订单详情
@@ -969,7 +969,7 @@ public class OrderMasterController {
         JSONObject json = new JSONObject();
         json.put("orderMaster", orderMaster);
         json.put("orderDetailList", detailList);
-        JsonResult jsonResult = syncOrderInfo(json, token);
+        JsonResult jsonResult = syncOrderInfo(json, token,orderMaster.getAddressId());
         return jsonResult;
 
     }
@@ -981,7 +981,7 @@ public class OrderMasterController {
      * @param token
      * @return
      */
-    private JsonResult syncOrderInfo(JSONObject json, String token) {
+    private JsonResult syncOrderInfo(JSONObject json, String token,Integer addressId) {
         //请求头
         HttpHeaders headers = new HttpHeaders();
         headers.add("Content-Type", "application/json");
@@ -990,11 +990,10 @@ public class OrderMasterController {
         //调用接口
         String resultInfo = restTemplate.postForObject(HTTP_ORDER_AGENT, entity, String.class);
         JSONObject jsonObject = JSONObject.parseObject(resultInfo);
-        Integer statusCode = (Integer) jsonObject.get("code");
-        //付款成功
+        String statusCode = (String) jsonObject.get("code");
         if (ORDER_SUCCESS_CODE.equals(statusCode)) {
             logger.info("代理商订单信息同步成功");
-            return result.success("同步成功");
+            return result.success("同步成功",addressId);
         } else {
             logger.error("代理商订单信息同步失败" + " 错误信息" + (String) jsonObject.get("data"));
             return result.error("同步失败");
