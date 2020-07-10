@@ -27,5 +27,12 @@ public interface OrderDetailDao extends BaseMapper<OrderDetail> {
      * @param detailList
      * @return
      */
-    List<GoodsVo> orderGoodsList(@Param("detailList")String[] detailList);
+    List<GoodsVo> orderGoodsList(@Param("detailList") String[] detailList);
+
+    /**
+     * 代理商订单详情
+     *
+     * @param orderDetail
+     */
+    void insertOrderDetailAgent(OrderDetail orderDetail);
 }

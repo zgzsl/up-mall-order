@@ -29,4 +29,23 @@
 			#{id}
 		</foreach>
 	</select>
+
+	<insert id="insertOrderDetailAgent" parameterType="com.zsl.upmall.entity.OrderDetail" >
+    insert into order_detail (id, order_id, sku_id, goods_count,
+     actual_count, goods_price, goods_carriage, goods_amount,
+     practical_clearing, clearing_info, goods_name, goods_img, goods_spec)
+    values (#{id,jdbcType=BIGINT},
+            #{orderId,jdbcType=BIGINT},
+            #{skuId,jdbcType=INTEGER},
+            #{goodsCount,jdbcType=INTEGER},
+            #{actualCount,jdbcType=INTEGER},
+            #{goodsPrice,jdbcType=DECIMAL},
+            #{goodsCarriage,jdbcType=DECIMAL},
+            #{goodsAmount,jdbcType=DECIMAL},
+            #{practicalClearing,jdbcType=DECIMAL},
+            #{clearingInfo,jdbcType=VARCHAR},
+            #{goodsName,jdbcType=VARCHAR},
+            #{goodsImg,jdbcType=VARCHAR},
+            #{goodsSpec,jdbcType=VARCHAR})
+  </insert>
 </mapper>

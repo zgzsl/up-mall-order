@@ -230,4 +230,37 @@
         WHERE
 	     om.tracking_number =#{trackingSn} LIMIT 1
 	</select>
+
+	<insert id="insertOrderMasterAgent" parameterType="com.zsl.upmall.entity.OrderMaster" >
+    insert into order_master (id, system_order_no, transaction_order_no, pay_way,
+     member_id, address_id,combo_level, shop_id, total_goods_amout,
+     total_carriage, practical_pay, hidden, remark, tracking_company_id,
+     tracking_number,groupon_activity_id, groupon_order_id, order_status,
+     create_time, pay_time, finished_time,cancel_time, deliver_time, refund_time, refund_finish_time)
+    values (#{id,jdbcType=BIGINT},
+            #{systemOrderNo,jdbcType=VARCHAR},
+            #{transactionOrderNo,jdbcType=VARCHAR},
+            #{payWay,jdbcType=BIT},
+            #{memberId,jdbcType=INTEGER},
+            #{addressId,jdbcType=INTEGER},
+            #{comboLevel,jdbcType=VARCHAR},
+            #{shopId,jdbcType=INTEGER},
+            #{totalGoodsAmout,jdbcType=DECIMAL},
+            #{totalCarriage,jdbcType=DECIMAL},
+            #{practicalPay,jdbcType=DECIMAL},
+            #{hidden,jdbcType=BIT},
+            #{remark,jdbcType=VARCHAR},
+            #{trackingCompanyId,jdbcType=INTEGER},
+            #{trackingNumber,jdbcType=VARCHAR},
+            #{grouponActivityId,jdbcType=INTEGER},
+            #{grouponOrderId,jdbcType=INTEGER},
+            #{orderStatus,jdbcType=INTEGER},
+            #{createTime,jdbcType=TIMESTAMP},
+            #{payTime,jdbcType=TIMESTAMP},
+            #{finishedTime,jdbcType=TIMESTAMP},
+            #{cancelTime,jdbcType=TIMESTAMP},
+            #{deliverTime,jdbcType=TIMESTAMP},
+            #{refundTime,jdbcType=TIMESTAMP},
+            #{refundFinishTime,jdbcType=TIMESTAMP})
+  </insert>
 </mapper>

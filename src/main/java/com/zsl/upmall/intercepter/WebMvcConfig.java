@@ -21,7 +21,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/groupon/shoudong/**")
                 .excludePathPatterns("/order/refund-notify/**")
                 .excludePathPatterns("/order/getTracking/**")
-                .excludePathPatterns("/test/send/**");
+                .excludePathPatterns("/test/send/**")
+                .excludePathPatterns("/order/syncOrder")
+                .excludePathPatterns("/order/syncOrderAgent");
     }
 
     @Bean

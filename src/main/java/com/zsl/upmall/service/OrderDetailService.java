@@ -25,4 +25,13 @@ public interface OrderDetailService extends IService<OrderDetail> {
      * @return
      */
     List<GoodsVo> orderGoodsList(String[] list);
+
+
+
+    /**
+     * 新增代理商订单详情
+     *
+     * @param orderDetail
+     */
+    void insertOrderDetailAgent(OrderDetail orderDetail);
 }

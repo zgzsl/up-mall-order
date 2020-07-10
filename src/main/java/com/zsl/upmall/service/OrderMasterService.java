@@ -7,15 +7,14 @@
 package com.zsl.upmall.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.zsl.upmall.entity.OrderMaster;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.zsl.upmall.entity.OrderMaster;
 import com.zsl.upmall.entity.Tracking;
 import com.zsl.upmall.vo.in.SkuAddStockVo;
 import com.zsl.upmall.vo.in.SkuDetailVo;
 import com.zsl.upmall.vo.out.OrderListVo;
 import com.zsl.upmall.vo.out.SubpackageVo;
 import com.zsl.upmall.vo.out.TrackingVo;
-import org.apache.ibatis.annotations.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -83,4 +82,12 @@ public interface OrderMasterService extends IService<OrderMaster> {
      * @return
      */
     Tracking orderTracking(String trackingSn);
+
+
+    /**
+     * 新增代理商订单信息
+     *
+     * @param orderMaster
+     */
+    void insertOrderMasterAgent(OrderMaster orderMaster);
 }

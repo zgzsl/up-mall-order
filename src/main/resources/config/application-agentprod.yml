@@ -2,7 +2,7 @@
 #  port: 8088
 spring:
   redis:
-        host: 222.186.56.173 # Redis服务器地址
+        host: 172.16.0.21 # Redis服务器地址
         database: 0 # Redis数据库索引（默认为0）
         port: 6379 # Redis服务器连接端口
         password: adminfeng5148@ # Redis服务器连接密码（默认为空）
@@ -18,9 +18,9 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
      # 使用druid连接池
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://gz-cdb-9ejqau7b.sql.tencentcdb.com:61279/up_mall?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://172.16.0.8:2890/up_mall_agent?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
-    password: adminfeng5148@
+    password: zs-mall24
     druid:
       initial-size: 5 #连接池初始化大小
       min-idle: 10 #最小空闲连接数
@@ -33,10 +33,6 @@ spring:
   jackson:
     serialization:
       write-dates-as-timestamps: true
-
-mybatis-plus:
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
 #微信配置
 upmall:
@@ -57,4 +53,4 @@ upmall:
 
 #接口链接
 requrl:
-   ORDER_AGENT: http://upmall-beta.cntracechain.com/order_agent/order/syncOrderAgent
+   ORDER_AGENT: http://xxx.com/order_agent/order/syncOrderAgent

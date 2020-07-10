@@ -33,14 +33,17 @@ import com.zsl.upmall.vo.in.*;
 import com.zsl.upmall.vo.out.Logistics;
 import com.zsl.upmall.vo.out.OrderListVo;
 import com.zsl.upmall.vo.out.UnifiedOrderVo;
-import lombok.experimental.Accessors;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -54,10 +57,10 @@ import java.util.*;
  * <p>自动生成工具：mybatis-dsc-generator</p>
  *
  * <p>说明： API接口层</P>
+ *
  * @version: V1.0
  * @author: binggleWang
  * @time 2020年04月08日
- *
  */
 @RestController
 @RequestMapping("/order")
@@ -99,11 +102,19 @@ public class OrderMasterController {
 
     protected JsonResult result = new JsonResult();
 
+    @Resource
+    private RestTemplate restTemplate;
+
+    @Value("${requrl.ORDER_AGENT}")
+    private String HTTP_ORDER_AGENT;
+
+
+    private static final Integer ORDER_SUCCESS_CODE = 300200;
 
     /**
-     * @explain 订单详情
-     * @param   id 订单id
+     * @param id 订单id
      * @return JsonResult
+     * @explain 订单详情
      * @author binggleWang
      * @time 2019年10月16日
      */
@@ -128,9 +139,9 @@ public class OrderMasterController {
         orderInfo.put("payTime", DateUtil.DateToString(orderMaster.getPayTime(), "yyyy-MM-dd HH:mm:ss"));
         orderInfo.put("finishTime", DateUtil.DateToString(orderMaster.getFinishedTime(), "yyyy-MM-dd HH:mm:ss"));
         orderInfo.put("cancelTime", DateUtil.DateToString(orderMaster.getCancelTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("deliverTime",DateUtil.DateToString(orderMaster.getDeliverTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("refundTime",DateUtil.DateToString(orderMaster.getRefundTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("refundFinishTime",DateUtil.DateToString(orderMaster.getRefundFinishTime(), "yyyy-MM-dd HH:mm:ss"));
+        orderInfo.put("deliverTime", DateUtil.DateToString(orderMaster.getDeliverTime(), "yyyy-MM-dd HH:mm:ss"));
+        orderInfo.put("refundTime", DateUtil.DateToString(orderMaster.getRefundTime(), "yyyy-MM-dd HH:mm:ss"));
+        orderInfo.put("refundFinishTime", DateUtil.DateToString(orderMaster.getRefundFinishTime(), "yyyy-MM-dd HH:mm:ss"));
         orderInfo.put("expire_time", orderMaster.getCreateTime().getTime() / 1000 + SystemConfig.ORDER_UNPAID / 1000);
         orderInfo.put("shareId", orderMaster.getRemark());
 
@@ -159,15 +170,15 @@ public class OrderMasterController {
     }
 
     /**
-     * @explain 下订单
-     * @param   orderInfo 订单信息
+     * @param orderInfo 订单信息
      * @return Boolean
+     * @explain 下订单
      * @author binggleWang
      * @time 2019年10月16日
      */
     @PostMapping("/createOrder")
     public JsonResult createOrder(@RequestBody CreateOrderVo orderInfo, HttpServletRequest request) {
-        logger.info("下单参数:【【【"+ JSONObject.toJSONString(orderInfo));
+        logger.info("下单参数:【【【" + JSONObject.toJSONString(orderInfo));
         long startTime = System.currentTimeMillis();
         //获取用户 userId
         RequestContext requestContext = RequestContextMgr.getLocalContext();
@@ -177,15 +188,15 @@ public class OrderMasterController {
         }
 
         // 根据 是否拼团，拼团是否过期
-        if(orderInfo.getGrouponActivityId() != null && orderInfo.getGrouponActivityId() - 0 != 0 && orderInfo.getJoinGroupId() - 0 != 0){
+        if (orderInfo.getGrouponActivityId() != null && orderInfo.getGrouponActivityId() - 0 != 0 && orderInfo.getJoinGroupId() - 0 != 0) {
             LocalDateTime nowDate = LocalDateTime.now();
             GrouponOrder grouponOrder = grouponOrderService.getById(orderInfo.getJoinGroupId());
-            if(grouponOrder != null ){
+            if (grouponOrder != null) {
                 LocalDateTime endTime = grouponOrder.getEndTime().toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-                if(grouponOrder.getSettlementTime() != null || endTime.isBefore(nowDate)){
+                if (grouponOrder.getSettlementTime() != null || endTime.isBefore(nowDate)) {
                     return result.error("拼团活动结束");
                 }
-            }else{
+            } else {
                 return result.error("拼团不存在");
             }
             //获取拼团活动信息
@@ -235,7 +246,7 @@ public class OrderMasterController {
                 return result.error("参数错误");
             }
             // 收货地址
-             AddressInfo addressInfo = addressService.addressInfo(new Long(orderInfo.getAddressId()));
+            AddressInfo addressInfo = addressService.addressInfo(new Long(orderInfo.getAddressId()));
             if (addressInfo == null) {
                 return result.error("地址不存在");
             }
@@ -251,22 +262,22 @@ public class OrderMasterController {
                     return result.error("商品不存在或已下架");
                 }
                 if (sku.getStock() - orderInfo.getProductCount() < 0) {
-                    return result.error(sku.getSkuName()+"库存不足");
+                    return result.error(sku.getSkuName() + "库存不足");
                 }
                 BigDecimal skuPrice = null;
-                if(orderInfo.getGrouponActivityId() - 0 != 0){
+                if (orderInfo.getGrouponActivityId() - 0 != 0) {
                     LambdaQueryWrapper<SkuGrouponPrice> queryWrapper = new LambdaQueryWrapper<>();
-                    queryWrapper.eq(SkuGrouponPrice::getSkuId,sku.getSkuId()).last("limit 1");
+                    queryWrapper.eq(SkuGrouponPrice::getSkuId, sku.getSkuId()).last("limit 1");
                     SkuGrouponPrice skuGrouponPrice = skuGrouponPriceService.getOne(queryWrapper);
-                    if(skuGrouponPrice != null){
+                    if (skuGrouponPrice != null) {
                         skuPrice = skuGrouponPrice.getGrouponPrice();
                     }
-                }else{
+                } else {
                     skuPrice = baseService.getSkuPriceByUserLevel(userId, sku.getSkuId());
                 }
 
                 if (skuPrice == null) {
-                    return result.error(sku.getSkuName()+"价格错误");
+                    return result.error(sku.getSkuName() + "价格错误");
                 }
                 sku.setSkuPrice(skuPrice);
                 //需要支付得 价格
@@ -274,42 +285,42 @@ public class OrderMasterController {
                 if (needTotalPrice.compareTo(orderInfo.getTotalAmount()) != 0) {
                     return result.error("订单价格不一致");
                 }
-                orderProductVoList.add(new OrderProductVo(sku.getSkuId(), orderInfo.getProductCount(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(),sku.getSkuName()));
+                orderProductVoList.add(new OrderProductVo(sku.getSkuId(), orderInfo.getProductCount(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(), sku.getSkuName()));
 
             } else {
                 // 购物车 (又加上了)
-                if(orderInfo.getCartIdList().isEmpty()){
+                if (orderInfo.getCartIdList().isEmpty()) {
                     return result.error("结算信息为空");
                 }
                 QueryWrapper<ShoppingCart> queryWrapper = new QueryWrapper<>();
-                queryWrapper.in("id",orderInfo.getCartIdList());
+                queryWrapper.in("id", orderInfo.getCartIdList());
                 List<ShoppingCart> shoppingCarts = shoppingCartService.list(queryWrapper);
-                if(shoppingCarts.isEmpty()){
-                    return  result.error("购物车已经清空");
+                if (shoppingCarts.isEmpty()) {
+                    return result.error("购物车已经清空");
                 }
                 BigDecimal needTotalCartPrice = new BigDecimal(0);
-                for(ShoppingCart cart : shoppingCarts){
+                for (ShoppingCart cart : shoppingCarts) {
                     sku = baseService.getSkuDetail(cart.getSkuId());
                     if (sku == null) {
                         return result.error("不存在或已下架");
                     }
                     if (sku.getStock() - cart.getGoodsNum() < 0) {
-                        return result.error(sku.getSkuName()+"库存不足");
+                        return result.error(sku.getSkuName() + "库存不足");
                     }
                     BigDecimal skuPrice = baseService.getSkuPriceByUserLevel(userId, sku.getSkuId());
                     if (skuPrice == null) {
-                        return result.error(sku.getSkuName()+"价格错误");
+                        return result.error(sku.getSkuName() + "价格错误");
                     }
                     sku.setSkuPrice(skuPrice);
                     BigDecimal itemPrice = sku.getSkuPrice().multiply(new BigDecimal(cart.getGoodsNum()));
                     needTotalCartPrice = needTotalCartPrice.add(itemPrice);
-                    orderProductVoList.add(new OrderProductVo(sku.getSkuId(), cart.getGoodsNum(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(),sku.getSkuName()));
+                    orderProductVoList.add(new OrderProductVo(sku.getSkuId(), cart.getGoodsNum(), sku.getSkuPrice(), sku.getSkuImage(), sku.getSpec(), sku.getSpuName(), sku.getSkuName()));
                 }
                 needTotalCartPrice = needTotalCartPrice.add(orderInfo.getFreight());
-                if(needTotalCartPrice.compareTo(orderInfo.getTotalAmount()) != 0){
+                if (needTotalCartPrice.compareTo(orderInfo.getTotalAmount()) != 0) {
                     return result.error("订单价格不一致");
                 }
-                if(orderProductVoList.isEmpty()){
+                if (orderProductVoList.isEmpty()) {
                     return result.error("请选择需要购买得商品");
                 }
             }
@@ -342,7 +353,7 @@ public class OrderMasterController {
             orderId = order.getId();
             orderSn = order.getSystemOrderNo();
             payType = order.getPayWay();
-            if(!(orderInfo.getCartId() - 0 == 0)) {
+            if (!(orderInfo.getCartId() - 0 == 0)) {
                 // 如果是购物车结算则清除购物车 (又加上上了 )
                 orderInfo.getCartIdList().stream().forEach(item -> {
                     shoppingCartService.removeById(item);
@@ -365,9 +376,9 @@ public class OrderMasterController {
                 orderDetail.setGoodsCount(orderProductVo.getProductCount());
                 orderDetail.setGoodsPrice(orderProductVo.getProductPrice());
                 orderDetail.setGoodsImg(orderProductVo.getProductImg());
-                if(StringUtils.isNotBlank(orderProductVo.getProductName())){
+                if (StringUtils.isNotBlank(orderProductVo.getProductName())) {
                     orderDetail.setGoodsName(orderProductVo.getProductName());
-                }else{
+                } else {
                     orderDetail.setGoodsName(orderProductVo.getSkuName());
                 }
 
@@ -380,7 +391,7 @@ public class OrderMasterController {
                 orderDetailService.save(orderDetail);
             }
 
-            int addSubStock = baseService.addAndSubSkuStock(skuAddStockVos, false,false,true);
+            int addSubStock = baseService.addAndSubSkuStock(skuAddStockVos, false, false, true);
             if (addSubStock - 0 == 0) {
                 OrderMaster updateHidden = new OrderMaster();
                 updateHidden.setId(order.getId());
@@ -403,7 +414,7 @@ public class OrderMasterController {
         map.put("orderSn", orderSn);
 
         // 支付方式，添加余额支付
-        if(payType - SystemConfig.WEIXIN_PAY == 0) {
+        if (payType - SystemConfig.WEIXIN_PAY == 0) {
             // 将元转分
             long startUnifiedTime = System.currentTimeMillis();
             String totalFee = "";
@@ -412,14 +423,14 @@ public class OrderMasterController {
             } else {
                 totalFee = MoneyUtil.moneyYuan2FenStr(toPayOrder.getPracticalPay());
             }
-            UnifiedOrderVo unifiedOrderVo = HttpClientUtil.unifiedOrder(IpUtil.getRequestIp(request), orderInfo.getOpenid(), "up-mall商品支付", orderSn, totalFee,requestContext.getToken());
+            UnifiedOrderVo unifiedOrderVo = HttpClientUtil.unifiedOrder(IpUtil.getRequestIp(request), orderInfo.getOpenid(), "up-mall商品支付", orderSn, totalFee, requestContext.getToken());
             logger.info("订单模块：{{" + orderSn + "}}的微信统一下单结果=====》》》" + unifiedOrderVo);
             if (unifiedOrderVo == null) {
                 return result.error("微信统一下单失败");
             }
             map.put("unifiedData", unifiedOrderVo.getData());
             logger.info("统一下单语句执行时间=========【【【 " + (System.currentTimeMillis() - startUnifiedTime) / 1000 + " 】】】秒");
-        }else if(payType - SystemConfig.BALANCE_PAY == 0){
+        } else if (payType - SystemConfig.BALANCE_PAY == 0) {
             //添加余额支付
             BigDecimal totalFeeBalance;
             if (StringUtils.isBlank(orderInfo.getOrderSn())) {
@@ -427,13 +438,13 @@ public class OrderMasterController {
             } else {
                 totalFeeBalance = toPayOrder.getPracticalPay();
             }
-            boolean balancePayResult = HttpClientUtil.deductUserBalance(4,false,userId,requestContext.getToken(),totalFeeBalance,orderSn);
-            if(!balancePayResult){
+            boolean balancePayResult = HttpClientUtil.deductUserBalance(4, false, userId, requestContext.getToken(), totalFeeBalance, orderSn);
+            if (!balancePayResult) {
                 logger.info("订单模块：{{" + orderSn + "}}的余额支付结果=====》》》" + balancePayResult);
                 return result.error("余额支付失败");
             }
 
-        }else {
+        } else {
             return result.error("暂不支持该支付方式");
         }
 
@@ -443,6 +454,7 @@ public class OrderMasterController {
 
     /**
      * 生成订单号
+     *
      * @param userId
      * @return
      */
@@ -475,6 +487,7 @@ public class OrderMasterController {
 
     /**
      * 将原来地址设置为假删除，并新增 一条一模一样的
+     *
      * @param addressId
      * @return
      */
@@ -499,9 +512,9 @@ public class OrderMasterController {
 
 
     /**
-     * @explain 订单列表
-     * @param   param ,others,对象参数：AppPage<UserFriend>
+     * @param param ,others,对象参数：AppPage<UserFriend>
      * @return PageInfo<UserFriend>
+     * @explain 订单列表
      * @author binggleWang
      * @time 2019年10月16日
      */
@@ -516,7 +529,7 @@ public class OrderMasterController {
             //查询全部
             orderStatus = -1;
         }
-        if ((orderStatus - SystemConfig.ORDER_STATUS_RECIEVE != 0) && (orderStatus - SystemConfig.ORDER_STATUS_WAIT_PAY != 0) && (orderStatus - SystemConfig.ORDER_STATUS_CANCLE != 0) && (orderStatus - SystemConfig.ORDER_STATUS_FINISH != 0) && (orderStatus - SystemConfig.ORDER_STATUS_DELIVER != 0)&& (orderStatus - SystemConfig.ORDER_STATUS_REFUNDINGD != 0)&& (orderStatus - SystemConfig.ORDER_STATUS_REFUNDED != 0)) {
+        if ((orderStatus - SystemConfig.ORDER_STATUS_RECIEVE != 0) && (orderStatus - SystemConfig.ORDER_STATUS_WAIT_PAY != 0) && (orderStatus - SystemConfig.ORDER_STATUS_CANCLE != 0) && (orderStatus - SystemConfig.ORDER_STATUS_FINISH != 0) && (orderStatus - SystemConfig.ORDER_STATUS_DELIVER != 0) && (orderStatus - SystemConfig.ORDER_STATUS_REFUNDINGD != 0) && (orderStatus - SystemConfig.ORDER_STATUS_REFUNDED != 0)) {
             //查询全部
             orderStatus = -1;
         }
@@ -529,7 +542,8 @@ public class OrderMasterController {
 
 
     /**
-     *  确认收货
+     * 确认收货
+     *
      * @param id 订单id
      * @return 取消订单操作结果
      */
@@ -562,13 +576,14 @@ public class OrderMasterController {
 
     /**
      * 会员返利
+     *
      * @param orderMaster
      */
-    public void memberRebate(String token,OrderMaster orderMaster){
+    public void memberRebate(String token, OrderMaster orderMaster) {
         Integer productCount = baseService.getTotalProductCount(orderMaster.getId().intValue());
         //会员邀请及普通消费返利
-        if(StringUtils.isBlank(orderMaster.getComboLevel())){
-            InviteRebateVo inviteRebateVo = HttpClientUtil.inviteRebate(orderMaster.getMemberId(), orderMaster.getSystemOrderNo(), token,productCount);
+        if (StringUtils.isBlank(orderMaster.getComboLevel())) {
+            InviteRebateVo inviteRebateVo = HttpClientUtil.inviteRebate(orderMaster.getMemberId(), orderMaster.getSystemOrderNo(), token, productCount);
             logger.info("会员邀请及普通消费返利【【【【" + orderMaster.getSystemOrderNo() + "】】】】,操作结束" + "【【【【" + inviteRebateVo + "】】】");
         }
 
@@ -593,6 +608,7 @@ public class OrderMasterController {
      * 1. 检测当前订单是否能够取消；
      * 2. 设置订单取消状态；
      * 3. 商品货品库存恢复；
+     *
      * @param id 订单id
      * @return 取消订单操作结果
      */
@@ -633,7 +649,7 @@ public class OrderMasterController {
             skuAddStockVo.setSkuId(orderGoods.getSkuId());
             skuAddStockVos.add(skuAddStockVo);
         }
-        int addSubStock = baseService.addAndSubSkuStock(skuAddStockVos, true,false,true);
+        int addSubStock = baseService.addAndSubSkuStock(skuAddStockVos, true, false, true);
         if (addSubStock - 0 == 0) {
             return result.error("扣库存失败");
         }
@@ -643,6 +659,7 @@ public class OrderMasterController {
 
     /**
      * 微信申请退款回调接口
+     *
      * @return 操作结果
      */
     @PostMapping("refund-notify")
@@ -677,13 +694,14 @@ public class OrderMasterController {
 
     /**
      * 余额支付回调
+     *
      * @return 操作结果
      */
     @PostMapping("balance-notify")
     public Object balanceNotify(@RequestBody BalanceRefundListVo list) {
         logger.info("微信申请退款回调接口回调结果===余额支付回调>" + list);
         List<BalanceRefundVo> allOrderMaster = list.getBalanceBatch();
-        for(BalanceRefundVo grouponOrderMaster : allOrderMaster){
+        for (BalanceRefundVo grouponOrderMaster : allOrderMaster) {
             OrderMaster order = baseService.getById(grouponOrderMaster.getOrderId());
             if (order == null) {
                 return result.error("订单不存在 sn=");
@@ -696,10 +714,10 @@ public class OrderMasterController {
 
             //判断是否拆单
             LambdaQueryWrapper<OrderDetail> orderDetailLambdaQueryWrapper = new LambdaQueryWrapper<>();
-            orderDetailLambdaQueryWrapper.eq(OrderDetail::getOrderId,order.getId());
+            orderDetailLambdaQueryWrapper.eq(OrderDetail::getOrderId, order.getId());
             List<OrderDetail> orderDetails = orderDetailService.list(orderDetailLambdaQueryWrapper);
-            if(orderDetails.size() - 1 > 0 && StringUtils.isNotBlank(orderDetails.get(0).getClearingInfo())){
-                logger.info("订单号：【【【"+order.getSystemOrderNo()+"】】】订单拆单多份不修改状态");
+            if (orderDetails.size() - 1 > 0 && StringUtils.isNotBlank(orderDetails.get(0).getClearingInfo())) {
+                logger.info("订单号：【【【" + order.getSystemOrderNo() + "】】】订单拆单多份不修改状态");
                 continue;
             }
 
@@ -716,13 +734,13 @@ public class OrderMasterController {
     }
 
 
-
     /**
      * 微信付款成功或失败回调接口
+     *
      * @return 操作结果
      */
     @PostMapping("pay-notify")
-    public Object payNotify(@RequestBody PayNotifyVo payNotifyVo,String token) {
+    public Object payNotify(@RequestBody PayNotifyVo payNotifyVo, String token) {
         logger.info("回调结果===>" + payNotifyVo);
         if (!"success".equals(payNotifyVo.getResult())) {
             return result.error("支付失败");
@@ -757,33 +775,33 @@ public class OrderMasterController {
         //修改销量
         // 商品货品数量增加
         QueryWrapper orderDetailWrapper = new QueryWrapper();
-        orderDetailWrapper.eq("order_id",order.getId());
+        orderDetailWrapper.eq("order_id", order.getId());
         List<OrderDetail> orderDetails = orderDetailService.list(orderDetailWrapper);
         //商品数量/库存减少
         List<SkuAddStockVo> skuAddStockVos = new ArrayList<>();
-        for(OrderDetail orderGoods : orderDetails){
+        for (OrderDetail orderGoods : orderDetails) {
             SkuAddStockVo skuAddStockVo = new SkuAddStockVo();
             skuAddStockVo.setCount(orderGoods.getGoodsCount());
             skuAddStockVo.setSkuId(orderGoods.getSkuId());
             skuAddStockVos.add(skuAddStockVo);
         }
-        int addSubStock = baseService.addAndSubSkuStock(skuAddStockVos,false,true,false);
-        if(addSubStock - 0 == 0){
+        int addSubStock = baseService.addAndSubSkuStock(skuAddStockVos, false, true, false);
+        if (addSubStock - 0 == 0) {
             throw new RuntimeException("【【【【" + order.getSystemOrderNo() + "】】】】销量增加失败");
         }
 
         if (StringUtils.isNotBlank(order.getRemark())) {
             //调用绑定接口
             int i = HttpClientUtil.agentShareBind(order.getMemberId(), order.getRemark());
-            logger.info("代理商绑定结果: [[[["+ i +"]]]]----【【【【" + order.getSystemOrderNo() + "】】】】,用户ID:" + "【【【【" + order.getMemberId() + "】】】,分享人分享码:【【【" + order.getRemark() + "】】】");
+            logger.info("代理商绑定结果: [[[[" + i + "]]]]----【【【【" + order.getSystemOrderNo() + "】】】】,用户ID:" + "【【【【" + order.getMemberId() + "】】】,分享人分享码:【【【" + order.getRemark() + "】】】");
         }
 
         // 根据 是否拼团，处理拼团业务
-        if(order.getGrouponActivityId() != null && order.getGrouponActivityId() - 0 != 0){
-            grouponOrderMasterService.doGrouponService(order.getId(),order.getMemberId());
-        }else{
+        if (order.getGrouponActivityId() != null && order.getGrouponActivityId() - 0 != 0) {
+            grouponOrderMasterService.doGrouponService(order.getId(), order.getMemberId());
+        } else {
             //返利 (非拼团才返利)
-            memberRebate(token,order);
+            memberRebate(token, order);
         }
 
         // 取消订单超时未支付任务
@@ -794,6 +812,7 @@ public class OrderMasterController {
 
     /**
      * 按orderSn查询OrderDetail对象（orderSn）
+     *
      * @param orderSn 订单号
      * @return
      */
@@ -812,6 +831,7 @@ public class OrderMasterController {
 
     /**
      * 用户id查询OrderMaster信息（memberId）
+     *
      * @param userId 用户id
      * @return
      */
@@ -825,8 +845,9 @@ public class OrderMasterController {
 
     /**
      * 判断该订单有没有支付（）（订单号, 套餐唯一标识）
-     * @param orderSn  订单号
-     * @param sign 套餐唯一标识
+     *
+     * @param orderSn 订单号
+     * @param sign    套餐唯一标识
      * @return
      */
     @GetMapping("isBuyPackage")
@@ -859,6 +880,7 @@ public class OrderMasterController {
 
     /**
      * 查看物流
+     *
      * @param orderId
      * @return
      */
@@ -896,5 +918,70 @@ public class OrderMasterController {
         } else {
             return result.error("获取物流失败");
         }
+    }
+
+
+    @GetMapping("syncOrder")
+    public JsonResult syncOrder(String orderNo,String token) {
+        QueryWrapper<OrderMaster> wrapper = new QueryWrapper();
+        wrapper.eq("system_order_no", orderNo);
+        OrderMaster orderMaster = baseService.getOne(wrapper);
+        QueryWrapper<OrderDetail> orderDetail = new QueryWrapper();
+        orderDetail.eq("order_id", orderMaster.getId());
+        List<OrderDetail> detailList = orderDetailService.list(orderDetail);
+        JSONObject json = new JSONObject();
+        json.put("orderMaster", orderMaster);
+        json.put("orderDetailList", detailList);
+        JsonResult jsonResult = syncOrderInfo(json, token);
+        return jsonResult;
+
+    }
+
+    /**
+     * 调用同步订单信息接口
+     *
+     * @param json
+     * @param token
+     * @return
+     */
+    private JsonResult syncOrderInfo(JSONObject json, String token) {
+        //请求头
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", "application/json");
+        headers.add("token", token);
+        HttpEntity<Object> entity = new HttpEntity<Object>(json, headers);
+        //调用接口
+        String resultInfo = restTemplate.postForObject(HTTP_ORDER_AGENT, entity, String.class);
+        JSONObject jsonObject = JSONObject.parseObject(resultInfo);
+        Integer statusCode = (Integer) jsonObject.get("code");
+        //付款成功
+        if (ORDER_SUCCESS_CODE.equals(statusCode)) {
+            logger.info("代理商订单信息同步成功");
+            return result.success("同步成功");
+        } else {
+            logger.error("代理商订单信息同步失败" + " 错误信息" + (String) jsonObject.get("data"));
+            return result.error("同步失败");
+        }
+    }
+
+    @PostMapping("syncOrderAgent")
+    public JsonResult syncOrderAgent(@RequestBody OrderAgentVo orderNo) {
+        OrderMaster orderMaster = orderNo.getOrderMaster();
+        List<OrderDetail> orderDetailList = orderNo.getOrderDetailList();
+        QueryWrapper<OrderMaster> wrapper = new QueryWrapper();
+        wrapper.eq("system_order_no", orderMaster.getSystemOrderNo());
+        OrderMaster order = baseService.getOne(wrapper);
+        if (order == null) {
+            baseService.insertOrderMasterAgent(orderMaster);
+            for (OrderDetail orderDetail : orderDetailList) {
+                orderDetailService.insertOrderDetailAgent(orderDetail);
+            }
+        } else {
+            baseService.updateById(orderMaster);
+            for (OrderDetail orderDetail : orderDetailList) {
+                orderDetailService.updateById(orderDetail);
+            }
+        }
+        return result.success("同步代理商订单信息");
     }
 }

@@ -49,3 +49,8 @@ upmall:
      # 抽奖结果通知
      - name: draw
        templateId: m38RGiDBNVl0BMz_I-fkm0ovAxB_2VFljssGxsCSMG8
+
+
+#接口链接
+requrl:
+   ORDER_AGENT: http://upmall.cntracechain.com/order_agent/order/syncOrderAgent

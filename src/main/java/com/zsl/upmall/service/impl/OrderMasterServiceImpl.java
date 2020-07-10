@@ -24,10 +24,8 @@ import java.util.List;
 
 /**
  * @Description:订单(服务实现)
- *
  * @version: V1.0
  * @author: binggleWang
- *
  */
 @Service
 public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMaster> implements OrderMasterService {
@@ -85,6 +83,7 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
 
     /**
      * 获取订单 物流信息
+     *
      * @param orderNo
      * @return
      */
@@ -95,6 +94,7 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
 
     /**
      * 分包裹物流信息
+     *
      * @param orderNo
      * @return
      */
@@ -105,11 +105,21 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
 
     /**
      * 订单物流公司信息
+     *
      * @param trackingSn
      * @return
      */
     @Override
     public Tracking orderTracking(String trackingSn) {
         return baseMapper.orderTracking(trackingSn);
+    }
+
+    /**
+     * 新增代理商订单信息
+     * @param orderMaster
+     */
+    @Override
+    public void insertOrderMasterAgent(OrderMaster orderMaster) {
+        baseMapper.insertOrderMasterAgent(orderMaster);
     }
 }
