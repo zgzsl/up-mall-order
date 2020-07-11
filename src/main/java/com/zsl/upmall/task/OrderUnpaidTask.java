@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class OrderUnpaidTask extends Task {
     private final Logger logger = LoggerFactory.getLogger(OrderUnpaidTask.class);
@@ -72,15 +73,18 @@ public class OrderUnpaidTask extends Task {
             skuAddStockVo.setCount(orderGoods.getGoodsCount());
             skuAddStockVo.setSkuId(orderGoods.getSkuId());
             skuAddStockVos.add(skuAddStockVo);
+
+            //redis 拼团人数减一
+            Stream.iterate(1, k -> ++k)
+                    .limit(orderGoods.getGoodsCount())
+                    .forEach(item -> {
+                        redisService.decrement(SystemConfig.GROUP_IS_FULL + order.getGrouponOrderId(),1);
+                    });
         }
         int addSubStock = orderService.addAndSubSkuStock(skuAddStockVos,true,false,true);
         if(addSubStock - 0 == 0){
             throw new RuntimeException("商品货品库存增加失败");
         }
-
-        //redis 拼团人数减一
-        redisService.decrement(SystemConfig.GROUP_IS_FULL + order.getGrouponOrderId(),1);
-
         logger.info("系统结束处理延时任务---订单超时未付款---" + this.orderId);
     }
 }

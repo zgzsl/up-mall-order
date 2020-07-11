@@ -55,6 +55,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * <p>自动生成工具：mybatis-dsc-generator</p>
@@ -225,7 +226,11 @@ public class OrderMasterController {
                     if(parseInt >= activityDetail.getGroupCount()){
                         return result.error("拼团人数已满!!!");
                     }
-                    redisService.increment(SystemConfig.GROUP_IS_FULL + orderInfo.getJoinGroupId(),1);
+                    Stream.iterate(1, k -> ++k)
+                            .limit(orderInfo.getProductCount())
+                            .forEach(item -> {
+                                redisService.increment(SystemConfig.GROUP_IS_FULL + orderInfo.getJoinGroupId(),1);
+                            });
                 }
             }
         }
@@ -693,14 +698,18 @@ public class OrderMasterController {
             skuAddStockVo.setCount(orderGoods.getGoodsCount());
             skuAddStockVo.setSkuId(orderGoods.getSkuId());
             skuAddStockVos.add(skuAddStockVo);
+
+            //redis 拼团人数减一
+            Stream.iterate(1, k -> ++k)
+                    .limit(orderGoods.getGoodsCount())
+                    .forEach(item -> {
+                        redisService.decrement(SystemConfig.GROUP_IS_FULL + orderMaster.getGrouponOrderId(),1);
+                    });
         }
         int addSubStock = baseService.addAndSubSkuStock(skuAddStockVos, true,false,true);
         if (addSubStock - 0 == 0) {
             return result.error("扣库存失败");
         }
-
-        //redis 拼团人数减一
-        redisService.decrement(SystemConfig.GROUP_IS_FULL + orderMaster.getGrouponOrderId(),1);
 
         return result.success("修改成功");
     }

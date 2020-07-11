@@ -289,6 +289,8 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
             return;
         }
 
+        boolean isSet = false;
+
         // 判断是否自己开团
         if (joinGroupId - 0 == 0) {
             //自己
@@ -331,8 +333,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 redisService.lpushList("CP_" + SystemConfig.GROUP_PREFIX + joinGroupId, vouchers);
             }
 
-            //存放redis数字用于人数判断
-            redisService.set(SystemConfig.GROUP_IS_FULL + joinGroupId,"1");
+            isSet = true;
 
         }else{
             // 存放拼团，活动redis 信息 （团队信息HASH: GROUPON_团队ID  用户ID  参与份额）
@@ -345,7 +346,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 .setGrouponOrderId(joinGroupId);
 
         // 插入groupon-order-master
-        insertGroupOrderMaster(grouponOrderMaster, joinGroupId, activityDetail.getMode(), userId, orderId);
+        insertGroupOrderMaster(isSet,grouponOrderMaster, joinGroupId, activityDetail.getMode(), userId, orderId);
 
         //webosocket通知
         SendMsgVo sendMsgVo =  sendMsg(orderId);
@@ -703,7 +704,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
      * @param groupOrderId
      * @param mode
      */
-    public void insertGroupOrderMaster(GrouponOrderMaster grouponOrderMaster, Integer groupOrderId, Integer mode, Integer userId, Long orderId) {
+    public void insertGroupOrderMaster(boolean isSet, GrouponOrderMaster grouponOrderMaster, Integer groupOrderId, Integer mode, Integer userId, Long orderId) {
         if (mode - 0 == 0) {
             // 判断用户是否参加当前团队，已参加则不再新增数据
             LambdaQueryWrapper<GrouponOrderMaster> queryWrapper = new LambdaQueryWrapper<>();
@@ -716,6 +717,10 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
             String voucherItem = redisService.lpop(SystemConfig.GROUP_PREFIX + groupOrderId);
             grouponOrderMaster.setVoucher(voucherItem);
             grouponOrderMasterService.save(grouponOrderMaster);
+            // 拼团人数判断
+            if(isSet){
+                redisService.set(SystemConfig.GROUP_IS_FULL + groupOrderId,"1");
+            }
         } else if (mode - 1 == 0) {
             LambdaQueryWrapper<OrderDetail> orderDetailQuery = new LambdaQueryWrapper<>();
             orderDetailQuery.eq(OrderDetail::getOrderId, orderId).last("limit 1");
@@ -732,6 +737,10 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                     });
             grouponOrderMaster.setVoucher(c_vouchers.toString().substring(0,c_vouchers.toString().length() - 1));
             grouponOrderMasterService.save(grouponOrderMaster);
+            // 拼团人数判断
+            if(isSet){
+                redisService.set(SystemConfig.GROUP_IS_FULL + groupOrderId,detail.getGoodsCount()+"");
+            }
         }
     }
 
