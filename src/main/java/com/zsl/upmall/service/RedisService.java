@@ -37,6 +37,15 @@ public interface RedisService {
     Long increment(String key, long delta);
 
 
+    /**
+     * 自减操作
+     * @param key
+     * @param delta
+     * @return
+     */
+    Long decrement(String key, long delta);
+
+
     void hset(String key, String field, Object value);
 
     /**

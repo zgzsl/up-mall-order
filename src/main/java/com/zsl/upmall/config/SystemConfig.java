@@ -10,6 +10,9 @@ public class SystemConfig {
     // 支付域名 (测试)
     public static String TEST_PAY_HOST = "http://zs-beta.cntracechain.com";
     //public static String TEST_PAY_HOST = "https://mall.cntracechain.com";
+
+    // 拼团活动人数判断前缀
+    public final  static String GROUP_IS_FULL = "GROUP_IS_FULL_";
     // 活动信息ZSET 前缀
     public final static String ACTIVE_INFO_PREFIX = "ACTIVE_";
     // 团队信息HASH 前缀

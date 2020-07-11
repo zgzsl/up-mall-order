@@ -331,6 +331,9 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 redisService.lpushList("CP_" + SystemConfig.GROUP_PREFIX + joinGroupId, vouchers);
             }
 
+            //存放redis数字用于人数判断
+            redisService.set(SystemConfig.GROUP_IS_FULL + joinGroupId,"1");
+
         }else{
             // 存放拼团，活动redis 信息 （团队信息HASH: GROUPON_团队ID  用户ID  参与份额）
             doRedisGroupInfo(false,orderId,activityDetail.getMode(),grouponActivityId,activityDetail.getGroupCount(),joinGroupId,userId);

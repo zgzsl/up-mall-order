@@ -6,6 +6,7 @@ import com.zsl.upmall.entity.OrderDetail;
 import com.zsl.upmall.entity.OrderMaster;
 import com.zsl.upmall.service.OrderDetailService;
 import com.zsl.upmall.service.OrderMasterService;
+import com.zsl.upmall.service.RedisService;
 import com.zsl.upmall.util.BeanUtil;
 import com.zsl.upmall.util.HttpClientUtil;
 import com.zsl.upmall.vo.in.SkuAddStockVo;
@@ -36,6 +37,8 @@ public class OrderUnpaidTask extends Task {
 
         OrderMasterService orderService = BeanUtil.getBean(OrderMasterService.class);
         OrderDetailService orderDetailService = BeanUtil.getBean(OrderDetailService.class);
+        RedisService redisService = BeanUtil.getBean(RedisService.class);
+
 
         //判断订单是否存在
         OrderMaster order = orderService.getById(this.orderId);
@@ -74,6 +77,10 @@ public class OrderUnpaidTask extends Task {
         if(addSubStock - 0 == 0){
             throw new RuntimeException("商品货品库存增加失败");
         }
+
+        //redis 拼团人数减一
+        redisService.decrement(SystemConfig.GROUP_IS_FULL + order.getGrouponOrderId(),1);
+
         logger.info("系统结束处理延时任务---订单超时未付款---" + this.orderId);
     }
 }

@@ -27,6 +27,7 @@ import com.zsl.upmall.util.DateUtil;
 import com.zsl.upmall.util.HttpClientUtil;
 import com.zsl.upmall.util.IpUtil;
 import com.zsl.upmall.util.MoneyUtil;
+import com.zsl.upmall.validator.RequestLimit;
 import com.zsl.upmall.vo.BalanceRefundListVo;
 import com.zsl.upmall.vo.BalanceRefundVo;
 import com.zsl.upmall.vo.RefundNotifyVo;
@@ -178,6 +179,7 @@ public class OrderMasterController {
      * @author binggleWang
      * @time 2019年10月16日
      */
+    @RequestLimit(count = 1, time = 3)
     @PostMapping("/createOrder")
     public JsonResult createOrder(@RequestBody CreateOrderVo orderInfo, HttpServletRequest request) {
         logger.info("下单参数:【【【"+ JSONObject.toJSONString(orderInfo));
@@ -213,6 +215,18 @@ public class OrderMasterController {
             if (end.isBefore(nowDate)) {
                 logger.info("下单活动过期：【【【" + orderInfo.getGrouponActivityId() + "】】】");
                 return result.error("活动过期");
+            }
+
+            //拼团订单  判断人数是否已满
+            if(orderInfo.getJoinGroupId() - 0 > 0){
+                String value =  redisService.get(SystemConfig.GROUP_IS_FULL + orderInfo.getJoinGroupId());
+                if(value != null){
+                    int parseInt = Integer.parseInt(value);
+                    if(parseInt >= activityDetail.getGroupCount()){
+                        return result.error("拼团人数已满!!!");
+                    }
+                    redisService.increment(SystemConfig.GROUP_IS_FULL + orderInfo.getJoinGroupId(),1);
+                }
             }
         }
 
@@ -684,6 +698,9 @@ public class OrderMasterController {
         if (addSubStock - 0 == 0) {
             return result.error("扣库存失败");
         }
+
+        //redis 拼团人数减一
+        redisService.decrement(SystemConfig.GROUP_IS_FULL + orderMaster.getGrouponOrderId(),1);
 
         return result.success("修改成功");
     }

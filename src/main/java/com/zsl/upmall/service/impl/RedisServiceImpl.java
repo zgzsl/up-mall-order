@@ -48,7 +48,14 @@ public class RedisServiceImpl implements RedisService {
     @Override
     public Long increment(String key, long delta) {
         return stringRedisTemplate.opsForValue().increment(key,delta);
+
     }
+
+    @Override
+    public Long decrement(String key, long delta){
+        return  stringRedisTemplate.opsForValue().decrement(key,delta);
+    }
+
 
     // Hash（哈希表）
     /**
