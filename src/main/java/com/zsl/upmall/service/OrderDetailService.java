@@ -28,10 +28,5 @@ public interface OrderDetailService extends IService<OrderDetail> {
 
 
 
-    /**
-     * 新增代理商订单详情
-     *
-     * @param orderDetail
-     */
-    void insertOrderDetailAgent(OrderDetail orderDetail);
+
 }

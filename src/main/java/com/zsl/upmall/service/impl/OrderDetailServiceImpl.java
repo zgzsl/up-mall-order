@@ -38,12 +38,5 @@ public class OrderDetailServiceImpl  extends ServiceImpl<OrderDetailDao, OrderDe
         return orderDetailDao.orderGoodsList(list);
     }
 
-    /**
-     * 新增代理商订单详情
-     * @param orderDetail
-     */
-    @Override
-    public void insertOrderDetailAgent(OrderDetail orderDetail) {
-        orderDetailDao.insertOrderDetailAgent(orderDetail);
-    }
+
 }

@@ -93,10 +93,5 @@ public interface OrderMasterService extends IService<OrderMaster> {
     List<BuyLimitVo> isBuyLimit(Integer memberId,List<Integer> spuList);
 
 
-    /**
-     * 新增代理商订单信息
-     *
-     * @param orderMaster
-     */
-    void insertOrderMasterAgent(OrderMaster orderMaster);
+
 }

@@ -1026,24 +1026,5 @@ public class OrderMasterController {
         }
     }
 
-    @PostMapping("syncOrderAgent")
-    public JsonResult syncOrderAgent(@RequestBody OrderAgentVo orderNo) {
-        OrderMaster orderMaster = orderNo.getOrderMaster();
-        List<OrderDetail> orderDetailList = orderNo.getOrderDetailList();
-        QueryWrapper<OrderMaster> wrapper = new QueryWrapper();
-        wrapper.eq("system_order_no", orderMaster.getSystemOrderNo());
-        OrderMaster order = baseService.getOne(wrapper);
-        if (order == null) {
-            baseService.insertOrderMasterAgent(orderMaster);
-            for (OrderDetail orderDetail : orderDetailList) {
-                orderDetailService.insertOrderDetailAgent(orderDetail);
-            }
-        } else {
-            baseService.updateById(orderMaster);
-            for (OrderDetail orderDetail : orderDetailList) {
-                orderDetailService.updateById(orderDetail);
-            }
-        }
-        return result.success("同步代理商订单信息");
-    }
+
 }

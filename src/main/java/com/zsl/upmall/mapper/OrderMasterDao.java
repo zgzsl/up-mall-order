@@ -92,10 +92,5 @@ public interface OrderMasterDao extends BaseMapper<OrderMaster> {
      */
     Tracking orderTracking(String trackingSn);
 
-    /**
-     * 新增代理商订单信息
-     *
-     * @param orderMaster
-     */
-    void insertOrderMasterAgent(OrderMaster orderMaster);
+
 }

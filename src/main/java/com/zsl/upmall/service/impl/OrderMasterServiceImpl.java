@@ -119,12 +119,5 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
         return baseMapper.isBuyLimit(memberId,spuList);
     }
 
-    /**
-     * 新增代理商订单信息
-     * @param orderMaster
-     */
-    @Override
-    public void insertOrderMasterAgent(OrderMaster orderMaster) {
-        baseMapper.insertOrderMasterAgent(orderMaster);
-    }
+
 }

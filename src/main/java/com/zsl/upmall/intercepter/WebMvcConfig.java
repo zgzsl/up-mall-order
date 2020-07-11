@@ -23,8 +23,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns("/order/refund-notify/**")
                 .excludePathPatterns("/order/getTracking/**")
                 .excludePathPatterns("/test/send/**")
-                .excludePathPatterns("/order/syncOrder")
-                .excludePathPatterns("/order/syncOrderAgent");
+                .excludePathPatterns("/order/syncOrder");
     }
 
     @Bean
