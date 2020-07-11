@@ -171,7 +171,7 @@
 
 	<select id="getSkuPriceByUserLevel" resultType="java.math.BigDecimal">
 		SELECT
-		   CASE 0
+		   CASE (select u.user_level userLevel from user_member u where u.id = #{userId})
 		   WHEN 0 THEN news_price
 		   WHEN 1 THEN bronze_price
 		   WHEN 2 THEN silver_price
