@@ -18,7 +18,7 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
      # 使用druid连接池
     type: com.alibaba.druid.pool.DruidDataSource
-    url: jdbc:mysql://172.16.0.8:2890/up_mall?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
+    url: jdbc:mysql://172.16.0.8:2890/up_mall_agent?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai
     username: root
     password: zs-mall24
     druid:
@@ -51,6 +51,3 @@ upmall:
        templateId: m38RGiDBNVl0BMz_I-fkm0ovAxB_2VFljssGxsCSMG8
 
 
-#接口链接
-requrl:
-   ORDER_AGENT: http://upmall.cntracechain.com/order_agent/order/syncOrderAgent

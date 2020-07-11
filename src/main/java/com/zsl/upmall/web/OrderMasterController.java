@@ -40,13 +40,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -105,14 +100,7 @@ public class OrderMasterController {
 
     protected JsonResult result = new JsonResult();
 
-    @Resource
-    private RestTemplate restTemplate;
 
-    @Value("${requrl.ORDER_AGENT}")
-    private String HTTP_ORDER_AGENT;
-
-
-    private static final String ORDER_SUCCESS_CODE = "300200";
 
     /**
      * @explain 订单详情
@@ -975,48 +963,11 @@ public class OrderMasterController {
     }
 
 
-    @GetMapping("syncOrder")
-    public JsonResult syncOrder(String orderNo,String token) {
-        QueryWrapper<OrderMaster> wrapper = new QueryWrapper();
-        wrapper.eq("system_order_no", orderNo);
-        OrderMaster orderMaster = baseService.getOne(wrapper);
-        QueryWrapper<OrderDetail> orderDetail = new QueryWrapper();
-        orderDetail.eq("order_id", orderMaster.getId());
-        List<OrderDetail> detailList = orderDetailService.list(orderDetail);
-        JSONObject json = new JSONObject();
-        json.put("orderMaster", orderMaster);
-        json.put("orderDetailList", detailList);
-        JsonResult jsonResult = syncOrderInfo(json, token,orderMaster.getAddressId());
-        return jsonResult;
-
-    }
-
     /**
-     * 调用同步订单信息接口
-     *
-     * @param json
-     * @param token
+     * 同步代理商订单
+     * @param orderNo
      * @return
      */
-    private JsonResult syncOrderInfo(JSONObject json, String token,Integer addressId) {
-        //请求头
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Type", "application/json");
-        headers.add("token", token);
-        HttpEntity<Object> entity = new HttpEntity<Object>(json, headers);
-        //调用接口
-        String resultInfo = restTemplate.postForObject(HTTP_ORDER_AGENT, entity, String.class);
-        JSONObject jsonObject = JSONObject.parseObject(resultInfo);
-        String statusCode = (String) jsonObject.get("code");
-        if (ORDER_SUCCESS_CODE.equals(statusCode)) {
-            logger.info("代理商订单信息同步成功");
-            return result.success("同步成功",addressId);
-        } else {
-            logger.error("代理商订单信息同步失败" + " 错误信息" + (String) jsonObject.get("data"));
-            return result.error("同步失败");
-        }
-    }
-
     @PostMapping("syncOrderAgent")
     public JsonResult syncOrderAgent(@RequestBody OrderAgentVo orderNo) {
         OrderMaster orderMaster = orderNo.getOrderMaster();
