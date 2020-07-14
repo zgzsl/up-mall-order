@@ -226,11 +226,6 @@ public class OrderMasterController {
                     if(parseInt >= activityDetail.getGroupCount()){
                         return result.error("拼团人数已满!!!");
                     }
-                    Stream.iterate(1, k -> ++k)
-                            .limit(orderInfo.getProductCount())
-                            .forEach(item -> {
-                                redisService.increment(SystemConfig.GROUP_IS_FULL + orderInfo.getJoinGroupId(),1);
-                            });
                 }
             }
         }
@@ -441,8 +436,8 @@ public class OrderMasterController {
                 orderDetail.setGoodsCarriage(orderInfo.getFreight());
                 orderDetail.setOrderId(orderId);
                 orderDetail.setSkuId(orderProductVo.getSkuId());
-                orderDetail.setGoodsAmount(orderProductVo.getProductPrice().multiply(new BigDecimal(orderProductVo.getProductCount())).subtract(orderInfo.getFreight()));
-                orderDetail.setPracticalClearing(orderProductVo.getProductPrice().multiply(new BigDecimal(orderProductVo.getProductCount())));
+                orderDetail.setGoodsAmount(orderProductVo.getProductPrice().multiply(new BigDecimal(orderProductVo.getProductCount())));
+                orderDetail.setPracticalClearing(orderDetail.getGoodsAmount().add(orderInfo.getFreight()));
                 orderDetailService.save(orderDetail);
             }
 
@@ -501,6 +496,17 @@ public class OrderMasterController {
 
         }else {
             return result.error("暂不支持该支付方式");
+        }
+
+        if(orderInfo.getJoinGroupId() - 0 > 0){
+            String value =  redisService.get(SystemConfig.GROUP_IS_FULL + orderInfo.getJoinGroupId());
+            if(value != null){
+                Stream.iterate(1, k -> ++k)
+                        .limit(orderInfo.getProductCount())
+                        .forEach(item -> {
+                            redisService.increment(SystemConfig.GROUP_IS_FULL + orderInfo.getJoinGroupId(),1);
+                        });
+            }
         }
 
         logger.info("总下单模块执行时间=========【【【 " + (System.currentTimeMillis() - startTime) / 1000 + " 】】】秒");

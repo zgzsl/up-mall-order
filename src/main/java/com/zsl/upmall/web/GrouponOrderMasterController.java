@@ -65,6 +65,9 @@ public class GrouponOrderMasterController {
     private TaskService taskService;
 
     @Autowired
+    private RedisService redisService;
+
+    @Autowired
     private OrderRefundService orderRefundService;
 
     @Autowired
@@ -78,6 +81,14 @@ public class GrouponOrderMasterController {
         JsonResult result = new JsonResult();
         Page<GrouponListVo> page = new Page(param.getPageNum(), param.getPageSize());
         return result.success(grouponOrderMasterService.getGrouponListByPage(page,grouponOrderId));
+    }
+
+
+    @GetMapping("resetRedis")
+    public JsonResult resetRedis(Integer grouponId){
+        JsonResult resetResult = new JsonResult();
+        redisService.set(SystemConfig.GROUP_IS_FULL + grouponId,"1");
+        return resetResult.success("重置成功");
     }
 
     @RequestLimit(count = 2, time = 180)
