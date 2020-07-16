@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -26,6 +27,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.math.BigDecimal.ROUND_DOWN;
+import static java.math.BigDecimal.ROUND_HALF_DOWN;
+import static java.math.BigDecimal.ROUND_HALF_UP;
 import static org.bouncycastle.asn1.x500.style.RFC4519Style.l;
 
 @RunWith(SpringRunner.class)
@@ -52,10 +56,7 @@ public class UpMallApplicationTests {
 
    @Test
     public void contextLoads() {
-       Map<Object, Object> hall = redisService.hgetall(SystemConfig.GROUP_INFO_PREFIX + 1);
-       for(Map.Entry<Object, Object> o : hall.entrySet()){
-           //currentSize += o
-           System.out.println("djdj:"+o.getValue());
-       }
+       BigDecimal score = new BigDecimal(12).divide(new BigDecimal(12),2,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+       System.out.println("jfjf");
     }
 }

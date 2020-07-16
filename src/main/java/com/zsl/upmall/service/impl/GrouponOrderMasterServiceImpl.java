@@ -665,7 +665,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
         }
         if(isFirst){
             if (mode - 0 == 0) {
-                BigDecimal score = new BigDecimal(1).divide(new BigDecimal(grouponCount)).multiply(new BigDecimal(100));
+                BigDecimal score = new BigDecimal(1).divide(new BigDecimal(grouponCount),2,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
                 redisService.zSet(SystemConfig.ACTIVE_INFO_PREFIX + grouponActivityId, joinGroupId+"", score.doubleValue());
                 redisService.hset(SystemConfig.GROUP_INFO_PREFIX + joinGroupId, userId+"", 1+"");
             } else if (mode - 1 == 0) {
@@ -692,7 +692,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 }
             }
 
-            BigDecimal score = new BigDecimal( currentSize).divide(new BigDecimal(grouponCount)).multiply(new BigDecimal(100));
+            BigDecimal score = new BigDecimal( currentSize).divide(new BigDecimal(grouponCount),2,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
             redisService.zUpdateScore(SystemConfig.ACTIVE_INFO_PREFIX + grouponActivityId, joinGroupId+"", score.doubleValue());
         }
     }
