@@ -20,10 +20,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,9 +51,20 @@ public class UpMallApplicationTests {
     @Autowired
     private GrouponActivitiesService grouponActivitiesService;
 
+    @Autowired
+    private GrouponOrderMasterService ddd;
+
    @Test
     public void contextLoads() {
-       BigDecimal score = new BigDecimal(12).divide(new BigDecimal(12),2,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+      /* BigDecimal score = new BigDecimal(2).divide(new BigDecimal(3),2,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
        System.out.println("jfjf");
+
+       String token = UUID.randomUUID().toString();
+       System.out.println("jfjf::::::"+token);
+       Map<String ,Object> userRedis = new HashMap<>();
+       userRedis.put("sessionKey","");
+       userRedis.put("userId","5");
+       redisService.set(token,JSONObject.toJSONString(userRedis));*/
+       ddd.doGrouponService(749l,5);
     }
 }
