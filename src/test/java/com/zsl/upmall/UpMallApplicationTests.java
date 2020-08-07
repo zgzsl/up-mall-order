@@ -88,7 +88,8 @@ public class UpMallApplicationTests {
                 .map(i -> leftAvg)
                 .collect(Collectors.toList());
         // 随机发放
-        List<Double> result = RedPacket.hb(right.doubleValue(), rightPointCount.intValue(), 0.01);
+        RedEnvelopesDemo red = new RedEnvelopesDemo();
+        List<Double> result = red.spiltRedPackets(right.doubleValue(),rightPointCount.intValue());
         List<BigDecimal> reusltRight = result.stream().map(item -> new BigDecimal(item).setScale(2, BigDecimal.ROUND_HALF_UP)).collect(Collectors.toList());
         List<BigDecimal> resultAll = new ArrayList<>();
         resultAll.addAll(reusltLeft);
