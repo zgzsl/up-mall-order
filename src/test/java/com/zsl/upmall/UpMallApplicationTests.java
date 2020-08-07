@@ -65,6 +65,37 @@ public class UpMallApplicationTests {
        userRedis.put("sessionKey","");
        userRedis.put("userId","5");
        redisService.set(token,JSONObject.toJSONString(userRedis));*/
-       ddd.doGrouponService(749l,5);
+       doRebateBalance(new BigDecimal(2),29,187);
     }
+
+    public void doRebateBalance(BigDecimal bounty, Integer notWinSize, Integer grouponOrderId) {
+        if(notWinSize - 1 == 0 ){
+            List<String> redisNotWinList1 = new ArrayList<>();
+            redisNotWinList1.add(bounty.toString());
+            redisService.lpushList(SystemConfig.NOT_WIN_LIST_PREFIX + grouponOrderId, redisNotWinList1);
+            return ;
+        }
+        //抽奖 (平分奖金)
+        BigDecimal left = bounty.divide(new BigDecimal(2), 1);
+        BigDecimal right = bounty.subtract(left);
+        BigDecimal leftPointCount = new BigDecimal(notWinSize).divide(new BigDecimal(2), 1);
+        BigDecimal rightPointCount = new BigDecimal(notWinSize).subtract(leftPointCount);
+        BigDecimal leftAvg = left.divide(leftPointCount,2,BigDecimal.ROUND_HALF_UP);
+        right = right.add(left.subtract(leftAvg.multiply(leftPointCount)));
+        // 发送奖金到余额 (平均)
+        List<BigDecimal> reusltLeft = Stream.iterate(1, k -> ++k)
+                .limit(leftPointCount.intValue())
+                .map(i -> leftAvg)
+                .collect(Collectors.toList());
+        // 随机发放
+        List<Double> result = RedPacket.hb(right.doubleValue(), rightPointCount.intValue(), 0.01);
+        List<BigDecimal> reusltRight = result.stream().map(item -> new BigDecimal(item).setScale(2, BigDecimal.ROUND_HALF_UP)).collect(Collectors.toList());
+        List<BigDecimal> resultAll = new ArrayList<>();
+        resultAll.addAll(reusltLeft);
+        resultAll.addAll(reusltRight);
+        List<String> redisNotWinList = resultAll.stream()
+                .map(item -> item.toString()).collect(Collectors.toList());
+        redisService.lpushList(SystemConfig.NOT_WIN_LIST_PREFIX + grouponOrderId, redisNotWinList);
+    }
+
 }

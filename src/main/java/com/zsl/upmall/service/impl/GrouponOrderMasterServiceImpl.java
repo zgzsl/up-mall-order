@@ -589,7 +589,7 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
         BigDecimal right = bounty.subtract(left);
         BigDecimal leftPointCount = new BigDecimal(notWinSize).divide(new BigDecimal(2), 1);
         BigDecimal rightPointCount = new BigDecimal(notWinSize).subtract(leftPointCount);
-        BigDecimal leftAvg = left.divide(leftPointCount).setScale(2, BigDecimal.ROUND_DOWN);
+        BigDecimal leftAvg = left.divide(leftPointCount,2,BigDecimal.ROUND_HALF_UP);
         right = right.add(left.subtract(leftAvg.multiply(leftPointCount)));
         // 发送奖金到余额 (平均)
         List<BigDecimal> reusltLeft = Stream.iterate(1, k -> ++k)
