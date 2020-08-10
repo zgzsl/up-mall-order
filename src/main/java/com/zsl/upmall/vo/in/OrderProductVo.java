@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class OrderProductVo {
     private Integer skuId;
+    private Integer shopId;
     private Integer productCount;
     private BigDecimal productPrice;
     private String productImg;

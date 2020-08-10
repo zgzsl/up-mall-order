@@ -37,36 +37,36 @@
 		<id column="orderId" property="orderId" />
 		<id column="orderSn" property="orderSn" />
 		<id column="orderStatus" property="orderStatus" />
-		<id column="totalAmount" property="totalAmount" />
 		<id column="comboLevel" property="comboLevel" />
 		<id column="isGroup" property="isGroup" />
 		<id column="grouponActivityId" property="grouponActivityId" />
 		<collection column="orderId" property="orderListProductList" select="getOrderListProductList"></collection>
 		<collection property="totalProductCounts" column="orderId" select="getTotalProductCount"></collection>
+		<collection property="totalAmount" column="orderId" select="getTotalAmountSum"></collection>
 	</resultMap>
 
 
 	<select id="getOrderListByStatus" resultMap="OrderListResultMap">
 		SELECT
-			orderM.id orderId,
-			orderM.member_id userId,
-			orderM.system_order_no orderSn,
-			orderM.practical_pay totalAmount,
-		    orderM.order_status orderStatus,
-		    orderM.combo_level comboLevel,
-		    if(gom.id,gom.groupon_status,-1) isGroup,
-		    orderM.groupon_activity_id grouponActivityId
+		osm.id orderId,
+		om.member_id userId,
+		osm.order_no orderSn,
+		osm.current_state orderStatus,
+		om.combo_level comboLevel,
+		IF(gom.id,gom.groupon_status ,- 1) isGroup,
+		om.groupon_activity_id grouponActivityId
 		FROM
-			order_master orderM
-		LEFT JOIN groupon_order_master gom on gom.order_id = orderM.id
+		order_shop_master osm
+		LEFT JOIN order_master om ON om.id = osm.order_master_id
+		LEFT JOIN groupon_order_master gom ON gom.order_id = om.id
 		WHERE
-			orderM.member_id = #{userId}
-		and orderM.hidden = 0
+			om.member_id = #{userId}
+		and om.hidden = 0
 		<if test="orderStatus != -1 ">
-			and orderM.order_status = #{orderStatus}
+			and osm.osm.current_state = #{orderStatus}
 		</if>
 		ORDER BY
-		    orderM.create_time DESC
+		    om.create_time DESC
 	</select>
 
 
@@ -100,12 +100,20 @@
 		WHERE
 			detailO.order_id = #{orderId}
 	</select>
-
+	<select id="getTotalAmountSum" resultType="decimal">
+		SELECT
+			sum(detailO.goods_amount) totalAmount
+		FROM
+			order_detail detailO
+		WHERE
+			detailO.order_id = #{orderId}
+	</select>
 
 
 	<resultMap id="skuResultMap" type="com.zsl.upmall.vo.in.SkuDetailVo">
 		<id column="skuId" property="skuId" />
 		<id column="spuId" property="spuId" />
+		<id column="shopId" property="shopId" />
 		<id column="skuName" property="skuName" />
 		<id column="spuName" property="spuName" />
 		<id column="salesVolume" property="salesVolume" />
@@ -120,6 +128,7 @@
 		SELECT
 		   sku.id skuId,
 		   sku.spu_id spuId,
+		   IFNULL(shop.id, 0) shopId,
 		   sku.sku_name skuName,
 		   spu.spu_name spuName,
 		   sku.cost_price costPrice,
@@ -134,6 +143,7 @@
 		  LEFT JOIN sku_spec_value ssv ON ssv.sku_id = sku.id
 		  LEFT JOIN spu spu on spu.id = sku.spu_id
 		  LEFT JOIN spec_value sv ON ssv.spec_value_id = sv.id
+		  LEFT JOIN shop ON spu.shop_id = shop.id
 		  WHERE
 		   sku.id = #{skuId}
 		  GROUP BY
@@ -257,10 +267,10 @@
 		ts.tracking_number AS trackingNumber,
 		ts.subpackage
 	    FROM
-		order_master om
-	    INNER JOIN tracking_subpackage ts ON ts.order_no = om.system_order_no
+		order_shop_master om
+	    INNER JOIN tracking_subpackage ts ON ts.order_no = om.order_no
 	    INNER JOIN tracking t ON ts.tracking_company_id = t.tracking_id
-	    WHERE om.system_order_no =#{orderNo}
+	    WHERE om.order_no =#{orderNo}
 	</select>
 	<select id="orderTracking" resultType="com.zsl.upmall.entity.Tracking">
 		SELECT

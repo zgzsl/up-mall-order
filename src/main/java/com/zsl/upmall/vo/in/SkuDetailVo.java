@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 public class SkuDetailVo {
     private Integer skuId;
     private Integer spuId;
+    private Integer shopId;
     private String skuName;
     private String spuName;
     private Integer salesVolume;
