@@ -4,11 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.zsl.upmall.config.SystemConfig;
 import com.zsl.upmall.entity.OrderDetail;
 import com.zsl.upmall.entity.OrderMaster;
+import com.zsl.upmall.entity.OrderShopMaster;
 import com.zsl.upmall.service.OrderDetailService;
 import com.zsl.upmall.service.OrderMasterService;
+import com.zsl.upmall.service.OrderShopMasterService;
 import com.zsl.upmall.service.RedisService;
 import com.zsl.upmall.util.BeanUtil;
-import com.zsl.upmall.util.HttpClientUtil;
 import com.zsl.upmall.vo.in.SkuAddStockVo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ public class OrderUnpaidTask extends Task {
         logger.info("系统开始处理延时任务---订单超时未付款---" + this.orderId);
 
         OrderMasterService orderService = BeanUtil.getBean(OrderMasterService.class);
+        OrderShopMasterService shopMasterService = BeanUtil.getBean(OrderShopMasterService.class);
         OrderDetailService orderDetailService = BeanUtil.getBean(OrderDetailService.class);
         RedisService redisService = BeanUtil.getBean(RedisService.class);
 
@@ -59,13 +61,22 @@ public class OrderUnpaidTask extends Task {
         upOrderCancel.setCancelTime(new Date());
         if (!orderService.updateById(upOrderCancel)) {
             throw new RuntimeException("更新数据已失效");
+        }else{
+            QueryWrapper<OrderShopMaster> queryWrapper2 = new QueryWrapper<>();
+            queryWrapper2.eq("order_master_id", order.getId());
+            OrderShopMaster update = new OrderShopMaster();
+            update.setCurrentState(SystemConfig.ORDER_STATUS_DELIVER);
+            shopMasterService.update(update, queryWrapper2);
         }
 
-        // 商品货品数量增加
-        QueryWrapper orderDetailWrapper = new QueryWrapper();
-        orderDetailWrapper.eq("order_id",this.orderId);
-        List<OrderDetail> orderDetails = orderDetailService.list(orderDetailWrapper);
-
+        List<Long> list = shopMasterService.listOrderShopMasterId(order.getId());
+        List<OrderDetail> orderDetails = new ArrayList<>();
+        for (Long orderId : list) {
+            // 商品货品数量增加
+            QueryWrapper orderDetailWrapper = new QueryWrapper();
+            orderDetailWrapper.eq("order_id",orderId);
+            orderDetails.addAll(orderDetailService.list(orderDetailWrapper));
+        }
         //商品数量/库存减少
         List<SkuAddStockVo> skuAddStockVos = new ArrayList<>();
         for(OrderDetail orderGoods : orderDetails){
