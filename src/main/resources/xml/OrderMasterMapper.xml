@@ -63,7 +63,7 @@
 			om.member_id = #{userId}
 		and om.hidden = 0
 		<if test="orderStatus != -1 ">
-			and osm.osm.current_state = #{orderStatus}
+			and osm.current_state = #{orderStatus}
 		</if>
 		ORDER BY
 		    om.create_time DESC
