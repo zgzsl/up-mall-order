@@ -65,10 +65,135 @@
 		<if test="orderStatus != -1 ">
 			and osm.current_state = #{orderStatus}
 		</if>
+		<if test="orderStatus == -1 ">
+			and osm.current_state not in(0,3)
+		</if>
 		ORDER BY
 		    om.create_time DESC
 	</select>
 
+	<select id="getOrderMasterListByStatus" resultMap="OrderMasterListResultMap">
+		SELECT
+		*
+		FROM
+		(
+		(
+		SELECT
+		om.id orderId,
+		om.member_id userId,
+		om.system_order_no orderSn,
+		om.order_status orderStatus,
+		om.combo_level comboLevel,
+		om.create_time as  createTime,
+		1 AS orderType,
+
+		IF (
+		gom.id,
+		gom.groupon_status ,- 1
+		) isGroup,
+		om.groupon_activity_id grouponActivityId,
+		od.goods_count productCount,
+		od.goods_name productName,
+		od.goods_img productImg,
+		od.goods_price productPrice,
+		od.goods_spec productSpec,
+		od.clearing_info clearInfo,
+		(
+		SELECT
+		count(detailO.goods_count) totalProductCount
+		FROM
+		order_detail detailO
+		WHERE
+		detailO.order_id = osm.id
+		) totalProductCount,
+		om.total_goods_amout AS totalAmount
+		FROM
+		order_master om
+		LEFT JOIN order_shop_master osm ON om.id = osm.order_master_id
+		LEFT JOIN groupon_order_master gom ON gom.order_id = om.id
+		LEFT JOIN order_detail od ON osm.id = od.order_id
+		WHERE
+		om.member_id = #{userId}
+		AND om.hidden = 0
+		AND om.order_status IN (0, 3)
+		)
+		UNION ALL
+		(
+		SELECT
+		osm.id orderId,
+		om.member_id userId,
+		osm.order_no orderSn,
+		osm.current_state orderStatus,
+		om.combo_level comboLevel,
+		om.create_time as  createTime,
+		2 AS orderType,
+
+		IF (
+		gom.id,
+		gom.groupon_status ,- 1
+		) isGroup,
+		om.groupon_activity_id grouponActivityId,
+		od.goods_count productCount,
+		od.goods_name productName,
+		od.goods_img productImg,
+		od.goods_price productPrice,
+		od.goods_spec productSpec,
+		od.clearing_info clearInfo,
+		(
+		SELECT
+		count(detailO.goods_count) totalProductCount
+		FROM
+		order_detail detailO
+		WHERE
+		detailO.order_id = osm.id
+		) totalProductCount,
+		(
+		SELECT
+		sum(detailO.goods_amount) totalAmount
+		FROM
+		order_detail detailO
+		WHERE
+		detailO.order_id = osm.id
+		) totalAmount
+		FROM
+		order_shop_master osm
+		LEFT JOIN order_master om ON om.id = osm.order_master_id
+		LEFT JOIN groupon_order_master gom ON gom.order_id = om.id
+		LEFT JOIN order_detail od ON osm.id = od.order_id
+		WHERE
+		om.member_id = #{userId}
+		AND om.hidden = 0
+		AND osm.current_state IN (1, 2, 4, 5, 6)
+		)
+		) AS order_list
+		<where>
+		<if test="orderStatus != -1 ">
+		 orderStatus = #{orderStatus}
+		</if>
+		</where>
+		ORDER BY
+		createTime DESC
+	</select>
+
+	<resultMap id="OrderMasterListResultMap" type="com.zsl.upmall.vo.out.OrderListVo">
+		<id column="orderId" property="orderId" />
+		<id column="orderSn" property="orderSn" />
+		<id column="orderStatus" property="orderStatus" />
+		<id column="comboLevel" property="comboLevel" />
+		<id column="isGroup" property="isGroup" />
+		<id column="orderType" property="orderType" />
+		<id column="grouponActivityId" property="grouponActivityId" />
+		<id column="totalProductCounts" property="totalProductCounts" />
+		<id column="totalAmount" property="totalAmount" />
+		<collection property="orderListProductList" ofType="com.zsl.upmall.vo.out.OrderListProductVo">
+			<id column="productCount" property="productCount" />
+			<id column="productName" property="productName" />
+			<id column="productImg" property="productImg" />
+			<id column="productPrice" property="productPrice" />
+			<id column="productSpec" property="productSpec" />
+			<id column="clearInfo" property="clearInfo" />
+		</collection>
+	</resultMap>
 
 	<resultMap id="OrderListProductListMap" type="com.zsl.upmall.vo.out.OrderListProductVo">
 		<id column="productCount" property="productCount" />
@@ -283,6 +408,34 @@
         WHERE
 	     om.tracking_number =#{trackingSn} LIMIT 1
 	</select>
-
+	<select id="countOrderNum" resultType="integer">
+		SELECT
+	count(orderSn)
+FROM
+	(
+		(
+			SELECT
+				om.system_order_no orderSn
+			FROM
+				order_master om
+			WHERE
+				om.member_id = #{userId}
+			AND om.hidden = 0
+			AND om.order_status IN (0, 3)
+		)
+		UNION ALL
+			(
+				SELECT
+					osm.order_no orderSn
+				FROM
+					order_shop_master osm
+				LEFT JOIN order_master om ON om.id = osm.order_master_id
+				WHERE
+					om.member_id =#{userId}
+				AND om.hidden = 0
+				AND osm.current_state IN (1, 2, 4, 5, 6)
+			)
+	) AS order_list
+	</select>
 
 </mapper>

@@ -28,6 +28,7 @@ import java.util.List;
  */
 public interface OrderMasterService extends IService<OrderMaster> {
     IPage<OrderListVo> getOrderListByStatus(IPage<OrderListVo> page,Integer orderStatus, Integer userId);
+    IPage<OrderListVo> getOrderMasterListByStatus(IPage<OrderListVo> page,Integer orderStatus, Integer userId);
 
     /**
      * 根据skuId 获取sku详情
@@ -92,6 +93,12 @@ public interface OrderMasterService extends IService<OrderMaster> {
      */
     List<BuyLimitVo> isBuyLimit(Integer memberId,List<Integer> spuList);
 
-
+    /**
+     * 统计用户订单数
+     *
+     * @param userId
+     * @return
+     */
+    int countOrderNum(Integer userId);
 
 }

@@ -13,21 +13,22 @@ import cn.binarywang.wx.miniapp.bean.WxMaSubscribeMessage;
 import cn.binarywang.wx.miniapp.config.impl.WxMaDefaultConfigImpl;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.google.gson.JsonObject;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.zsl.upmall.config.SystemConfig;
 import com.zsl.upmall.config.WebSocket;
 import com.zsl.upmall.config.WxProperties;
-import com.zsl.upmall.context.RequestContext;
-import com.zsl.upmall.context.RequestContextMgr;
 import com.zsl.upmall.entity.*;
 import com.zsl.upmall.mapper.GrouponOrderMasterDao;
 import com.zsl.upmall.service.*;
 import com.zsl.upmall.task.GroupNoticeUnpaidTask;
 import com.zsl.upmall.task.GrouponOrderUnpaidTask;
 import com.zsl.upmall.task.TaskService;
-import com.zsl.upmall.util.*;
-import com.zsl.upmall.vo.BalacneRebateVo;
+import com.zsl.upmall.util.CharUtil;
+import com.zsl.upmall.util.HttpClientUtil;
+import com.zsl.upmall.util.MoneyUtil;
+import com.zsl.upmall.util.RedEnvelopesDemo;
 import com.zsl.upmall.vo.GroupOrderStatusEnum;
 import com.zsl.upmall.vo.MiniNoticeVo;
 import com.zsl.upmall.vo.SendMsgVo;
@@ -38,8 +39,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -86,6 +87,9 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
 
     @Autowired
     private OrderRefundService orderRefundService;
+
+    @Resource
+    private OrderShopMasterService orderShopMasterService;
 
     @Override
     public IPage<GrouponListVo> getGrouponListByPage(IPage<GrouponListVo> page, Integer grouponOrderId) {
@@ -348,7 +352,6 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 .setOrderId(orderId.intValue())
                 .setCreateTime(new Date())
                 .setGrouponOrderId(joinGroupId);
-
         // 插入groupon-order-master
         insertGroupOrderMaster(isSet,grouponOrderMaster, joinGroupId, activityDetail.getMode(), userId, orderId);
 
@@ -407,7 +410,10 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 GrouponOrderMaster grouponOrderMasterUpdate = new GrouponOrderMaster();
                 grouponOrderMasterUpdate.setId(grouponOrderMaster.getId());
                 grouponOrderMasterUpdate.setGrouponStatus(GroupOrderStatusEnum.FAILED.getCode());
-                OrderMaster orderDetail = orderMasterService.getById(grouponOrderMaster.getOrderId());
+                QueryWrapper<OrderShopMaster> orderShopMasterQueryWrapper = new QueryWrapper();
+                orderShopMasterQueryWrapper.eq("order_master_id", grouponOrderMaster.getOrderId()).last("LIMIT 1");
+                OrderShopMaster shopMaster = orderShopMasterService.getOne(orderShopMasterQueryWrapper);
+                OrderMaster orderDetail = orderMasterService.getById(shopMaster.getId());
                 if(orderDetail != null){
                     grouponOrderMasterUpdate.setGrouponResult("返回本金" + orderDetail.getPracticalPay()+"");
                 }
@@ -452,8 +458,11 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 GrouponOrderMaster grouponOrderMasterUpdate = new GrouponOrderMaster();
                 grouponOrderMasterUpdate.setId(grouponOrderMaster.getId());
                 grouponOrderMasterUpdate.setGrouponStatus(GroupOrderStatusEnum.SUCCESS.getCode());
+                QueryWrapper<OrderShopMaster> orderShopMasterQueryWrapper = new QueryWrapper();
+                orderShopMasterQueryWrapper.eq("order_master_id", grouponOrderMaster.getOrderId()).last("LIMIT 1");
+                OrderShopMaster shopMaster = orderShopMasterService.getOne(orderShopMasterQueryWrapper);
                 LambdaQueryWrapper<OrderDetail> detailLamb = new LambdaQueryWrapper<>();
-                detailLamb.eq(OrderDetail::getOrderId,grouponOrderMaster.getOrderId()).last("limit 1");
+                detailLamb.eq(OrderDetail::getOrderId,shopMaster.getId()).last("limit 1");
                 OrderDetail orderDetail = orderDetailService.getOne(detailLamb);
                 if(orderDetail != null){
                     grouponOrderMasterUpdate.setGrouponResult(orderDetail.getGoodsName()+" *"+orderDetail.getGoodsCount());
@@ -506,8 +515,11 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 //中奖了
                 if (StringUtils.isNotBlank(win_voucher_str)) {
                     updateItem.setGrouponStatus(GroupOrderStatusEnum.SUCCESS.getCode());
+                    QueryWrapper<OrderShopMaster> orderShopMasterQueryWrapper = new QueryWrapper();
+                    orderShopMasterQueryWrapper.eq("order_master_id", item.getOrderId()).last("LIMIT 1");
+                    OrderShopMaster shopMaster = orderShopMasterService.getOne(orderShopMasterQueryWrapper);
                     LambdaQueryWrapper<OrderDetail> detailLamb = new LambdaQueryWrapper<>();
-                    detailLamb.eq(OrderDetail::getOrderId,item.getOrderId()).last("limit 1");
+                    detailLamb.eq(OrderDetail::getOrderId,shopMaster.getId()).last("limit 1");
                     OrderDetail orderDetail = orderDetailService.getOne(detailLamb);
                     if(orderDetail != null){
                         updateItem.setGrouponResult(orderDetail.getGoodsName()+" *"+orderDetail.getGoodsCount());
@@ -616,8 +628,11 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
      */
     public BigDecimal splitOrder(Integer orderId, int notWinCount) {
         logger.info("没中奖数量："+notWinCount);
+        QueryWrapper<OrderShopMaster> orderShopMasterQueryWrapper = new QueryWrapper();
+        orderShopMasterQueryWrapper.eq("order_master_id", orderId).last("LIMIT 1");
+        OrderShopMaster shopMaster = orderShopMasterService.getOne(orderShopMasterQueryWrapper);
         LambdaQueryWrapper<OrderDetail> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(OrderDetail::getOrderId, orderId);
+        queryWrapper.eq(OrderDetail::getOrderId, shopMaster.getId());
         OrderDetail orderDetail = orderDetailService.getOne(queryWrapper);
         if (orderDetail == null) {
             return null;
@@ -662,8 +677,11 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
      * @param userId
      */
     public void doRedisGroupInfo(boolean isFirst, Long orderId, Integer mode, Integer grouponActivityId, Integer grouponCount, Integer joinGroupId, Integer userId) {
+        QueryWrapper<OrderShopMaster> orderShopMasterQueryWrapper = new QueryWrapper();
+        orderShopMasterQueryWrapper.eq("order_master_id", orderId).last("LIMIT 1");
+        OrderShopMaster shopMaster = orderShopMasterService.getOne(orderShopMasterQueryWrapper);
         LambdaQueryWrapper<OrderDetail> detailQueryWrapper = new LambdaQueryWrapper<>();
-        detailQueryWrapper.eq(OrderDetail::getOrderId, orderId).last("limit 1");
+        detailQueryWrapper.eq(OrderDetail::getOrderId, shopMaster.getId()).last("limit 1");
         OrderDetail orderDetail = orderDetailService.getOne(detailQueryWrapper);
         if (detailQueryWrapper == null) {
             return;
@@ -727,8 +745,11 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                 redisService.set(SystemConfig.GROUP_IS_FULL + groupOrderId,"1");
             }
         } else if (mode - 1 == 0) {
+            QueryWrapper<OrderShopMaster> orderShopMasterQueryWrapper = new QueryWrapper();
+            orderShopMasterQueryWrapper.eq("order_master_id", orderId).last("LIMIT 1");
+            OrderShopMaster shopMaster = orderShopMasterService.getOne(orderShopMasterQueryWrapper);
             LambdaQueryWrapper<OrderDetail> orderDetailQuery = new LambdaQueryWrapper<>();
-            orderDetailQuery.eq(OrderDetail::getOrderId, orderId).last("limit 1");
+            orderDetailQuery.eq(OrderDetail::getOrderId, shopMaster.getId()).last("limit 1");
             OrderDetail detail = orderDetailService.getOne(orderDetailQuery);
             if (detail == null) {
                 return;
@@ -796,6 +817,11 @@ public class GrouponOrderMasterServiceImpl extends ServiceImpl<GrouponOrderMaste
                     updateRefunding.setRefundTime(new Date());
                     updateRefunding.setOrderStatus(SystemConfig.ORDER_STATUS_REFUNDINGD);
                     boolean isSuccess = orderMasterService.updateById(updateRefunding);
+                    QueryWrapper<OrderShopMaster> queryWrapper2 = new QueryWrapper<>();
+                    queryWrapper2.eq("order_master_id", orderMaster.getId());
+                    OrderShopMaster update = new OrderShopMaster();
+                    update.setCurrentState(SystemConfig.ORDER_STATUS_REFUNDINGD);
+                    orderShopMasterService.update(update, queryWrapper2);
                     logger.info("微信退款订单：【【【【"+orderMaster.getSystemOrderNo()+"】】】，修改结果：[[[["+isSuccess+"]]]]");
                 }else{
                     logger.info("微信退款订单拆单：【【【【"+orderMaster.getSystemOrderNo());

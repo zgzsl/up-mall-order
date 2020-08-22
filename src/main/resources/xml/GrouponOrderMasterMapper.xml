@@ -31,20 +31,21 @@
 
 	<select id="getGrouponListByPage" resultMap="GrouponListMap">
 				SELECT
-					u1.nick_name groupNickName,
-					u1.avatar groupAvatar,
-					ga.activity_title grouponName,
-					u.nick_name nickName,
-					o.pay_time payTime,
-					d.goods_count goodsCount
-				FROM
-					`groupon_order_master` g
-				LEFT JOIN user_member u on u.id = g.member_id
-				LEFT JOIN order_master o on o.id = g.order_id
-				LEFT JOIN order_detail d on d.order_id = g.order_id
-				LEFT JOIN groupon_order go on go.id = g.groupon_order_id
-			    LEFT JOIN user_member u1 on u1.id = go.user_member_id
-				LEFT JOIN groupon_activities ga on ga.id = go.groupon_activities_id
+	            u1.nick_name groupNickName,
+	            u1.avatar groupAvatar,
+	            ga.activity_title grouponName,
+	            u.nick_name nickName,
+	            o.pay_time payTime,
+	            d.goods_count goodsCount
+               FROM
+	             `groupon_order_master` g
+              LEFT JOIN user_member u ON u.id = g.member_id
+              LEFT JOIN order_master o ON o.id = g.order_id
+              LEFT JOIN order_shop_master osm ON osm.order_master_id = o.id
+              LEFT JOIN order_detail d ON d.order_id = osm.id
+              LEFT JOIN groupon_order go ON go.id = g.groupon_order_id
+              LEFT JOIN user_member u1 ON u1.id = go.user_member_id
+              LEFT JOIN groupon_activities ga ON ga.id = go.groupon_activities_id
 				WHERE
 					g.groupon_order_id =  #{grouponOrderId}
 				ORDER BY o.pay_time DESC
@@ -78,7 +79,8 @@
 		FROM
 			groupon_order_master gom
 		LEFT JOIN order_master om on om.id = gom.order_id
-		LEFT JOIN order_detail od on od.order_id = om.id
+		LEFT JOIN order_shop_master osm on om.id=osm.order_master_id
+		LEFT JOIN order_detail od on od.order_id = osm.id
 		LEFT JOIN user_member um on um.id = gom.member_id
 		LEFT JOIN groupon_order go on go.id = gom.groupon_order_id
 		LEFT JOIN groupon_activities ga on ga.id = go.groupon_activities_id

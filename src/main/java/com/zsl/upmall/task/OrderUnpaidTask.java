@@ -65,7 +65,7 @@ public class OrderUnpaidTask extends Task {
             QueryWrapper<OrderShopMaster> queryWrapper2 = new QueryWrapper<>();
             queryWrapper2.eq("order_master_id", order.getId());
             OrderShopMaster update = new OrderShopMaster();
-            update.setCurrentState(SystemConfig.ORDER_STATUS_DELIVER);
+            update.setCurrentState(SystemConfig.ORDER_STATUS_CANCLE);
             shopMasterService.update(update, queryWrapper2);
         }
 

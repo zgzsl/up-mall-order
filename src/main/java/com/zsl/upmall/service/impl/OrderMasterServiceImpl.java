@@ -38,6 +38,11 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
         return this.baseMapper.getOrderListByStatus(page, orderStatus, userId);
     }
 
+    @Override
+    public IPage<OrderListVo> getOrderMasterListByStatus(IPage<OrderListVo> page, Integer orderStatus, Integer userId) {
+        return this.baseMapper.getOrderMasterListByStatus(page,orderStatus,userId);
+    }
+
     /**
      * 根据skuId 获取sku详情
      *
@@ -117,6 +122,11 @@ public class OrderMasterServiceImpl extends ServiceImpl<OrderMasterDao, OrderMas
     @Override
     public List<BuyLimitVo> isBuyLimit(Integer memberId, List<Integer> spuList) {
         return baseMapper.isBuyLimit(memberId,spuList);
+    }
+
+    @Override
+    public int countOrderNum(Integer userId) {
+        return baseMapper.countOrderNum(userId);
     }
 
 

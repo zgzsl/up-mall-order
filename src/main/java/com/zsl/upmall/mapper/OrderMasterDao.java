@@ -31,6 +31,8 @@ import java.util.List;
 public interface OrderMasterDao extends BaseMapper<OrderMaster> {
     IPage<OrderListVo> getOrderListByStatus(IPage<OrderListVo> page, @Param("orderStatus") Integer orderStatus, @Param("userId") Integer userId);
 
+    IPage<OrderListVo> getOrderMasterListByStatus(IPage<OrderListVo> page, @Param("orderStatus") Integer orderStatus, @Param("userId") Integer userId);
+
     /**
      * 根据skuId 获取sku详情
      *
@@ -58,7 +60,7 @@ public interface OrderMasterDao extends BaseMapper<OrderMaster> {
      */
     BigDecimal getSkuPriceByUserLevel(@Param("userId") Integer userId, @Param("skuId") Integer skuId);
 
-    List<BuyLimitVo> isBuyLimit(@Param("memberId") Integer memberId,@Param("spuList") List<Integer> spuList);
+    List<BuyLimitVo> isBuyLimit(@Param("memberId") Integer memberId, @Param("spuList") List<Integer> spuList);
 
     /**
      * 获取订单商品总数量
@@ -91,6 +93,14 @@ public interface OrderMasterDao extends BaseMapper<OrderMaster> {
      * @return
      */
     Tracking orderTracking(String trackingSn);
+
+    /**
+     * 统计用户订单数
+     *
+     * @param userId
+     * @return
+     */
+    int countOrderNum(Integer userId);
 
 
 }

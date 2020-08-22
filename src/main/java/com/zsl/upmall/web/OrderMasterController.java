@@ -131,59 +131,110 @@ public class OrderMasterController {
      * @author binggleWang
      * @time 2019年10月16日
      */
-    @GetMapping("/getById/{id}")
-    public JsonResult getById(@PathVariable("id") Long id) {
-        Map<String, Object> orderInfo = new HashMap<String, Object>();
-        OrderShopMaster shopMaster = orderShopMasterService.getById(id);
-        OrderMaster orderMaster = baseService.getById(shopMaster.getOrderMasterId());
-        if (orderMaster == null) {
-            return result.error("订单不存在");
+    @GetMapping("/getById/{id}/{orderType}")
+    public JsonResult getById(@PathVariable("id") Long id, @PathVariable("orderType") Integer orderType) {
+        if (orderType == null) {
+            orderType = 1;
         }
-        QueryWrapper<TrackingSubpackage> queryWrapper2 = new QueryWrapper<>();
-        queryWrapper2.eq("order_no", shopMaster.getOrderNo());
-        TrackingSubpackage subpackage = trackingSubpackageService.getOne(queryWrapper2);
-        orderInfo.put("deliverTime", DateUtil.DateToString(subpackage == null ? null : subpackage.getDeliverTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("id", id);
-        orderInfo.put("orderSn", shopMaster.getOrderNo());
-        orderInfo.put("traceNo", orderMaster.getTransactionOrderNo());
-        orderInfo.put("payWay", orderMaster.getPayWay());
-        orderInfo.put("comboLevel", orderMaster.getComboLevel());
-        orderInfo.put("status", shopMaster.getCurrentState());
-        orderInfo.put("statusText", SystemConfig.getStatusText(shopMaster.getCurrentState()));
-        orderInfo.put("submitTime", DateUtil.DateToString(orderMaster.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("payTime", DateUtil.DateToString(orderMaster.getPayTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("finishTime", DateUtil.DateToString(orderMaster.getFinishedTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("cancelTime", DateUtil.DateToString(orderMaster.getCancelTime(), "yyyy-MM-dd HH:mm:ss"));
+        Map<String, Object> orderInfo = new HashMap<String, Object>(16);
+        OrderMaster orderMaster = null;
+        OrderShopMaster shopMaster = null;
+        if (orderType == 1) {
+            orderMaster = baseService.getById(id);
+            orderInfo.put("id", id);
+            orderInfo.put("orderSn", orderMaster.getSystemOrderNo());
+            orderInfo.put("traceNo", orderMaster.getTransactionOrderNo());
+            orderInfo.put("payWay", orderMaster.getPayWay());
+            orderInfo.put("comboLevel", orderMaster.getComboLevel());
+            orderInfo.put("goodsAmount", orderMaster.getTotalGoodsAmout());
+            orderInfo.put("actualPrice", orderMaster.getPracticalPay());
+            orderInfo.put("freightPrice", orderMaster.getTotalCarriage());
+            orderInfo.put("status", orderMaster.getOrderStatus());
+            orderInfo.put("statusText", SystemConfig.getStatusText(orderMaster.getOrderStatus()));
+            orderInfo.put("submitTime", DateUtil.DateToString(orderMaster.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("payTime", DateUtil.DateToString(orderMaster.getPayTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("finishTime", DateUtil.DateToString(orderMaster.getFinishedTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("cancelTime", DateUtil.DateToString(orderMaster.getCancelTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("deliverTime", DateUtil.DateToString(orderMaster.getDeliverTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("refundTime", DateUtil.DateToString(orderMaster.getRefundTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("refundFinishTime", DateUtil.DateToString(orderMaster.getRefundFinishTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("expire_time", orderMaster.getCreateTime().getTime() / 1000 + SystemConfig.ORDER_UNPAID / 1000);
+            orderInfo.put("shareId", orderMaster.getRemark());
 
-        orderInfo.put("refundTime", DateUtil.DateToString(orderMaster.getRefundTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("refundFinishTime", DateUtil.DateToString(orderMaster.getRefundFinishTime(), "yyyy-MM-dd HH:mm:ss"));
-        orderInfo.put("expire_time", orderMaster.getCreateTime().getTime() / 1000 + SystemConfig.ORDER_UNPAID / 1000);
-        orderInfo.put("shareId", orderMaster.getRemark());
+            //订单商品列表
+            List<SkuDetailVo> productDetailList = new ArrayList<>();
+            List<Long> list = orderShopMasterService.listOrderShopMasterId(orderMaster.getId());
+            List<OrderDetail> orderDetails = new ArrayList<>();
+            for (Long orderId : list) {
+                QueryWrapper orderDetailWrapper = new QueryWrapper();
+                orderDetailWrapper.eq("order_id", orderId);
+                orderDetails.addAll(orderDetailService.list(orderDetailWrapper));
+            }
+            for (OrderDetail orderGoods : orderDetails) {
+                SkuDetailVo skuDetailVo = new SkuDetailVo();
+                skuDetailVo.setSkuPrice(orderGoods.getGoodsPrice());
+                skuDetailVo.setProductCount(orderGoods.getGoodsCount());
+                skuDetailVo.setSkuImage(orderGoods.getGoodsImg());
+                skuDetailVo.setSkuName(orderGoods.getGoodsName());
+                skuDetailVo.setSpec(orderGoods.getGoodsSpec());
+                skuDetailVo.setSkuId(orderGoods.getSkuId());
+                skuDetailVo.setDesc(orderGoods.getClearingInfo());
+                productDetailList.add(skuDetailVo);
+            }
+            orderInfo.put("productDetailList", productDetailList);
+            //订单地址信息
+            AddressInfo addressInfo = addressService.addressInfo(new Long(orderMaster.getAddressId()));
+            orderInfo.put("addressInfo", addressInfo);
+            return result.success(orderInfo);
+        } else {
+            shopMaster = orderShopMasterService.getById(id);
+            orderMaster = baseService.getById(shopMaster.getOrderMasterId());
+            QueryWrapper<TrackingSubpackage> queryWrapper2 = new QueryWrapper<>();
+            queryWrapper2.eq("order_no", shopMaster.getOrderNo());
+            List<TrackingSubpackage> list = trackingSubpackageService.list(queryWrapper2);
+            orderInfo.put("deliverTime", DateUtil.DateToString(list.size() == 0 ? null : list.get(0).getDeliverTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("id", id);
+            orderInfo.put("orderSn", shopMaster.getOrderNo());
+            orderInfo.put("traceNo", orderMaster.getTransactionOrderNo());
+            orderInfo.put("payWay", orderMaster.getPayWay());
+            orderInfo.put("comboLevel", orderMaster.getComboLevel());
+            orderInfo.put("status", shopMaster.getCurrentState());
+            orderInfo.put("statusText", SystemConfig.getStatusText(shopMaster.getCurrentState()));
+            orderInfo.put("submitTime", DateUtil.DateToString(orderMaster.getCreateTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("payTime", DateUtil.DateToString(orderMaster.getPayTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("finishTime", DateUtil.DateToString(orderMaster.getFinishedTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("cancelTime", DateUtil.DateToString(orderMaster.getCancelTime(), "yyyy-MM-dd HH:mm:ss"));
 
-        //订单商品列表
-        List<SkuDetailVo> productDetailList = new ArrayList<>();
-        QueryWrapper orderDetailWrapper = new QueryWrapper();
-        orderDetailWrapper.eq("order_id", id);
-        List<OrderDetail> orderDetails = orderDetailService.list(orderDetailWrapper);
-        orderInfo.put("goodsAmount", orderDetails.stream().map(OrderDetail::getGoodsAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-        orderInfo.put("actualPrice", orderDetails.stream().map(OrderDetail::getGoodsAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
-        orderInfo.put("freightPrice", orderDetails.stream().map(OrderDetail::getGoodsCarriage).reduce(BigDecimal.ZERO, BigDecimal::add));
-        for (OrderDetail orderGoods : orderDetails) {
-            SkuDetailVo skuDetailVo = new SkuDetailVo();
-            skuDetailVo.setSkuPrice(orderGoods.getGoodsPrice());
-            skuDetailVo.setProductCount(orderGoods.getGoodsCount());
-            skuDetailVo.setSkuImage(orderGoods.getGoodsImg());
-            skuDetailVo.setSkuName(orderGoods.getGoodsName());
-            skuDetailVo.setSpec(orderGoods.getGoodsSpec());
-            skuDetailVo.setSkuId(orderGoods.getSkuId());
-            skuDetailVo.setDesc(orderGoods.getClearingInfo());
-            productDetailList.add(skuDetailVo);
+            orderInfo.put("refundTime", DateUtil.DateToString(orderMaster.getRefundTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("refundFinishTime", DateUtil.DateToString(orderMaster.getRefundFinishTime(), "yyyy-MM-dd HH:mm:ss"));
+            orderInfo.put("expire_time", orderMaster.getCreateTime().getTime() / 1000 + SystemConfig.ORDER_UNPAID / 1000);
+            orderInfo.put("shareId", orderMaster.getRemark());
+
+            //订单商品列表
+            List<SkuDetailVo> productDetailList = new ArrayList<>();
+            QueryWrapper orderDetailWrapper = new QueryWrapper();
+            orderDetailWrapper.eq("order_id", id);
+            List<OrderDetail> orderDetails = orderDetailService.list(orderDetailWrapper);
+            orderInfo.put("goodsAmount", orderDetails.stream().map(OrderDetail::getGoodsAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+            orderInfo.put("actualPrice", orderDetails.stream().map(OrderDetail::getGoodsAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
+            orderInfo.put("freightPrice", orderDetails.stream().map(OrderDetail::getGoodsCarriage).reduce(BigDecimal.ZERO, BigDecimal::add));
+            for (OrderDetail orderGoods : orderDetails) {
+                SkuDetailVo skuDetailVo = new SkuDetailVo();
+                skuDetailVo.setSkuPrice(orderGoods.getGoodsPrice());
+                skuDetailVo.setProductCount(orderGoods.getGoodsCount());
+                skuDetailVo.setSkuImage(orderGoods.getGoodsImg());
+                skuDetailVo.setSkuName(orderGoods.getGoodsName());
+                skuDetailVo.setSpec(orderGoods.getGoodsSpec());
+                skuDetailVo.setSkuId(orderGoods.getSkuId());
+                skuDetailVo.setDesc(orderGoods.getClearingInfo());
+                productDetailList.add(skuDetailVo);
+            }
+            orderInfo.put("productDetailList", productDetailList);
+            //订单地址信息
+            AddressInfo addressInfo = addressService.addressInfo(new Long(orderMaster.getAddressId()));
+            orderInfo.put("addressInfo", addressInfo);
+            return result.success(orderInfo);
         }
-        orderInfo.put("productDetailList", productDetailList);
-        //订单地址信息
-        AddressInfo addressInfo = addressService.addressInfo(new Long(orderMaster.getAddressId()));
-        orderInfo.put("addressInfo", addressInfo);
-        return result.success(orderInfo);
     }
 
     /**
@@ -279,7 +330,6 @@ public class OrderMasterController {
             if (addressInfo == null) {
                 return result.error("地址不存在");
             }
-
             // 商品价格
             List<OrderProductVo> orderProductVoList = new ArrayList<>();
             SkuDetailVo sku = null;
@@ -367,12 +417,13 @@ public class OrderMasterController {
                     List<Integer> spuList = new ArrayList<>();
                     spuList.add(sku.getSpuId());
                     List<BuyLimitVo> buyLimitVos = baseService.isBuyLimit(userId, spuList);
+
                     if (CollectionUtil.isNotEmpty(buyLimitVos)) {
                         Integer limit = buyLimitVos.get(0).getLimits();
                         if (limit == -1) {
                             return result.error("【" + sku.getSpuName() + "】限制购买数量");
                         } else if (limit > 0) {
-                            if (orderInfo.getProductCount() - limit > 0) {
+                            if (cart.getGoodsNum() - limit > 0) {
                                 return result.error("【" + sku.getSpuName() + "】超过限制购买数量");
                             }
                         }
@@ -387,7 +438,6 @@ public class OrderMasterController {
                     return result.error("请选择需要购买得商品");
                 }
             }
-
             // 最终支付费用
             BigDecimal actualPrice = orderInfo.getTotalAmount();
             OrderMaster order = new OrderMaster();
@@ -619,10 +669,9 @@ public class OrderMasterController {
             //查询全部
             orderStatus = -1;
         }
-        //分页数据
-        IPage<OrderListVo> pageData = baseService.getOrderListByStatus(page, orderStatus, userId);
-        returnPage.success(pageData);
-
+        IPage<OrderListVo> list = baseService.getOrderMasterListByStatus(page, orderStatus, userId);
+        list.setTotal(baseService.countOrderNum(userId));
+        returnPage.success(list);
         return returnPage;
     }
 
@@ -934,7 +983,6 @@ public class OrderMasterController {
             int i = HttpClientUtil.agentShareBind(order.getMemberId(), order.getRemark());
             logger.info("代理商绑定结果: [[[[" + i + "]]]]----【【【【" + order.getSystemOrderNo() + "】】】】,用户ID:" + "【【【【" + order.getMemberId() + "】】】,分享人分享码:【【【" + order.getRemark() + "】】】");
         }
-
         // 根据 是否拼团，处理拼团业务
         if (order.getGrouponActivityId() != null && order.getGrouponActivityId() - 0 != 0) {
             grouponOrderMasterService.doGrouponService(order.getId(), order.getMemberId());
