@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zsl.upmall.mapper.OrderShopMasterDao">
+
+	<resultMap id="BaseResultMap" type="com.zsl.upmall.entity.OrderShopMaster">
+		<id column="id" property="id" />
+		<id column="order_master_id" property="orderMasterId" />
+		<id column="shop_id" property="shopId" />
+		<id column="order_no" property="orderNo" />
+		<id column="current_state" property="currentState" />
+		<id column="create_time" property="createTime" />
+	</resultMap>
+	<sql id="Base_Column_List">
+		id, order_master_id, shop_id,order_no,current_state,create_time
+	</sql>
+
+
+
+</mapper>
