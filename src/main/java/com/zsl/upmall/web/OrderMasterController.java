@@ -1121,11 +1121,18 @@ public class OrderMasterController {
         QueryWrapper<OrderMaster> wrapper = new QueryWrapper();
         wrapper.eq("system_order_no", orderNo);
         OrderMaster orderMaster = baseService.getOne(wrapper);
-        QueryWrapper<OrderDetail> orderDetail = new QueryWrapper();
-        orderDetail.eq("order_id", orderMaster.getId());
-        List<OrderDetail> detailList = orderDetailService.list(orderDetail);
+        QueryWrapper<OrderShopMaster> orderShopMasterQueryWrapper = new QueryWrapper();
+        orderShopMasterQueryWrapper.eq("order_master_id", orderMaster.getId());
+        List<OrderShopMaster> shopMasters = orderShopMasterService.list(orderShopMasterQueryWrapper);
+        List<OrderDetail> detailList = new ArrayList<>();
+        for (OrderShopMaster shopMaster : shopMasters) {
+            QueryWrapper<OrderDetail> orderDetail = new QueryWrapper();
+            orderDetail.eq("order_id", shopMaster.getId());
+            detailList.addAll(orderDetailService.list(orderDetail));
+        }
         JSONObject json = new JSONObject();
         json.put("orderMaster", orderMaster);
+        json.put("orderShopMaster", shopMasters);
         json.put("orderDetailList", detailList);
         JsonResult jsonResult = syncOrderInfo(json, token, orderMaster.getAddressId());
         return jsonResult;
